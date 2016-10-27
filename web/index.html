@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+    <head>
+        <title>SaltyRTC Demo</title>
+        <style>
+            #messages {
+                width: 800px;
+            }
+            textarea {
+                width: 100%;
+                height: 300px;
+                margin: 0;
+                padding: 0;
+            }
+            #input {
+                display: flex;
+            }
+            input[type=text] {
+                flex-grow: 1;
+                margin-left: 10px;
+                margin-right: 10px;
+            }
+        </style>
+        <script src="node_modules/msgpack-lite/dist/msgpack.min.js"></script>
+        <script src="node_modules/tweetnacl/nacl-fast.min.js"></script>
+        <script src="node_modules/chunked-dc/dist/chunked-dc.es5.min.js"></script>
+        <script src="node_modules/saltyrtc-client/dist/saltyrtc-client.es5.js"></script>
+        <script src="node_modules/saltyrtc-task-webrtc/dist/saltyrtc-task-webrtc.es5.js"></script>
+        <script src="scripts.js"></script>
+    </head>
+    <body>
+        <h1>SaltyRTC Demo</h1>
+        <p>Public key: <code>424280166304526b4a2874a2270d091071fcc5c98959f7d4718715626df26204</code></p>
+        <p>Secret key: <code>74d427ae6a95dedde68850e0ff9da952acf69e6e41436230f126fbd220e1faea</code></p>
+        <div id="messages">
+            <div id="output">
+                <textarea></textarea>
+            </div>
+            <div id="input">
+            Text: <input type="text"> <button>Submit</button>
+            </div>
+        </div>
+    </body>
+</html>
