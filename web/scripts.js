@@ -10,8 +10,8 @@
 const PUBLIC_KEY = '424280166304526b4a2874a2270d091071fcc5c98959f7d4718715626df26204';
 const PRIVATE_KEY = '74d427ae6a95dedde68850e0ff9da952acf69e6e41436230f126fbd220e1faea';
 const TRUSTED_KEY = '232385faea4c0fca2c867bfb7ca74f634178ee0bc13364ee738e02cd4318e839';
-const HOST = 'saltyrtc.threema.ch';
-const PORT = 443;
+const HOST = 'saltyrtc.example.org';
+const PORT = 8765;
 const DC_LABEL = 'much-secure';
 
 
