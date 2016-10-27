@@ -73,6 +73,14 @@
                 <td>ICE gathering state</td>
                 <td><span id="iceGatheringState">unknown</span></td>
             </tr>
+            <tr>
+                <td>Handover</td>
+                <td><span id="handoverState">no</span></td>
+            </tr>
+            <tr>
+                <td>Secure data channel state</td>
+                <td><span id="dataChannelState">unknown</span></td>
+            </tr>
         </table>
 
         <div id="messages" class="disabled">
@@ -81,7 +89,7 @@
                 <textarea></textarea>
             </div>
             <div id="input">
-            Text: <input type="text"> <button>Submit via Signaling</button> <button>Submit via DataChannel</button>
+            Text: <input type="text"> <button id="sendSignaling">Submit via Signaling</button> <button id="sendDc">Submit via DataChannel</button>
             </div>
         </div>
     </body>

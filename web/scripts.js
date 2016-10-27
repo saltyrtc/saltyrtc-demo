@@ -3,6 +3,7 @@ const PRIVATE_KEY = '74d427ae6a95dedde68850e0ff9da952acf69e6e41436230f126fbd220e
 const TRUSTED_KEY = '232385faea4c0fca2c867bfb7ca74f634178ee0bc13364ee738e02cd4318e839';
 const HOST = 'saltyrtc.threema.ch';
 const PORT = 443;
+const DC_LABEL = 'much-secure';
 
 
 class TestClient {
@@ -20,6 +21,9 @@ class TestClient {
             .asInitiator();
         this.client.on('state-change', this.onStateChange.bind(this));
         this.client.connect();
+
+        document.querySelector('#sendSignaling').onclick = () => alert('Not yet implemented');
+        document.querySelector('#sendDc').onclick = () => alert('Not yet implemented');
     }
 
     onStateChange(newState) {
@@ -77,6 +81,33 @@ class TestClient {
 
         // Request handover
         this.task.handover(this.pc);
+
+        // On handover, wrap a new data channel
+        this.client.on('handover', () => {
+            console.info('Handover done');
+            this.setState('handover', 'yes');
+
+            const dc = this.pc.createDataChannel(DC_LABEL);
+            dc.binaryType = 'arraybuffer';
+            this.sdc = this.task.wrapDataChannel(dc);
+            this.sdc.onopen = () => {
+                console.info('Secure data channel is open');
+                this.setState('dataChannel', this.sdc.readyState);
+                setInterval(() => {
+                    if (this.sdc != null) {
+                        this.setState('dataChannel', this.sdc.readyState);
+                    }
+                }, 1000);
+            };
+            this.sdc.onerror = (e) => {
+                console.error('Secure data channel error:', e);
+                this.setState('dataChannel', this.sdc.readyState);
+            };
+            this.sdc.onclose = () => {
+                console.error('Secure data channel was closed');
+                this.setState('dataChannel', this.sdc.readyState);
+            };
+        });
     }
 
     setupIceCandidateHandling() {
