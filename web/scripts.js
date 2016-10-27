@@ -32,11 +32,33 @@ class TestClient {
             .withTrustedPeerKey(hexToU8a(TRUSTED_KEY))
             .usingTasks([this.task])
             .asInitiator();
+        this.client.on('state-change', this.onStateChange.bind(this));
         this.client.connect();
+    }
+
+    onStateChange(newState) {
+        console.log('New state:', newState);
+        document.querySelector('#state').innerHTML = newState.data;
+        if (newState.data == 'task') {
+            const messages = document.querySelector('#messages');
+            messages.classList.remove('disabled');
+            const loading = document.querySelector('#loading');
+            loading.parentNode.removeChild(loading);
+        }
     }
 
 }
 
 
-let client = new TestClient();
-client.start();
+function ready(fn) {
+    if (document.readyState != 'loading'){
+        fn();
+    } else {
+        document.addEventListener('DOMContentLoaded', fn);
+    }
+}
+
+ready(() => {
+    let client = new TestClient();
+    client.start();
+});

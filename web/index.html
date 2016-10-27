@@ -3,8 +3,17 @@
     <head>
         <title>SaltyRTC Demo</title>
         <style>
+            #state-wrapper {
+                margin: 5px 0 20px;
+            }
+            #loading {
+                padding-left: 10px;
+            }
             #messages {
                 width: 800px;
+            }
+            #messages.disabled {
+                display: none;
             }
             textarea {
                 width: 100%;
@@ -19,6 +28,8 @@
                 flex-grow: 1;
                 margin-left: 10px;
                 margin-right: 10px;
+                border-width: 1px;
+                border-style: solid;
             }
         </style>
         <script src="node_modules/msgpack-lite/dist/msgpack.min.js"></script>
@@ -30,9 +41,12 @@
     </head>
     <body>
         <h1>SaltyRTC Demo</h1>
-        <p>Public key: <code>424280166304526b4a2874a2270d091071fcc5c98959f7d4718715626df26204</code></p>
-        <p>Secret key: <code>74d427ae6a95dedde68850e0ff9da952acf69e6e41436230f126fbd220e1faea</code></p>
-        <div id="messages">
+        <p>
+            * Public key: <code>424280166304526b4a2874a2270d091071fcc5c98959f7d4718715626df26204</code><br>
+            * Secret key: <code>74d427ae6a95dedde68850e0ff9da952acf69e6e41436230f126fbd220e1faea</code>
+        </p>
+        <div id="state-wrapper">Signaling state: <span id="state">unknown</span> <img id="loading" src="ajax-loader.gif" alt="Loading..."></div>
+        <div id="messages" class="disabled">
             <div id="output">
                 <textarea></textarea>
             </div>
