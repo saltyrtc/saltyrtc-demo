@@ -49,21 +49,80 @@
         android:text="@string/button_stop"
         android:enabled="false"/>
 
-    <TextView
-        android:id="@+id/state_prefix"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/button_start"
-        android:text="Signaling status: "
-        tools:ignore="HardcodedText"/>
+        android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/state"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/button_start"
-        android:layout_toEndOf="@id/state_prefix"
-        android:text="UNKNOWN"
-        tools:ignore="HardcodedText"/>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="SaltyRTC signaling state: "
+                tools:ignore="HardcodedText"/>
+            <TextView
+                android:id="@+id/salty_signaling_state"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/loading"
+                tools:ignore="HardcodedText"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PeerConnection signaling state: "
+                tools:ignore="HardcodedText"/>
+            <TextView
+                android:id="@+id/rtc_signaling_state"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/loading"
+                tools:ignore="HardcodedText"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ICE connection state: "
+                tools:ignore="HardcodedText"/>
+            <TextView
+                android:id="@+id/rtc_ice_connection_state"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/loading"
+                tools:ignore="HardcodedText"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ICE gathering state: "
+                tools:ignore="HardcodedText"/>
+            <TextView
+                android:id="@+id/rtc_ice_gathering_state"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/loading"
+                tools:ignore="HardcodedText"/>
+        </LinearLayout>
+
+    </LinearLayout>
 
 </RelativeLayout>

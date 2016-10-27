@@ -23,7 +23,7 @@ class TestClient {
     }
 
     onStateChange(newState) {
-        console.log('New state:', newState);
+        console.debug('New state:', newState);
         document.querySelector('#state').innerHTML = newState.data;
         if (newState.data == 'task') {
             const messages = document.querySelector('#messages');
@@ -35,26 +35,71 @@ class TestClient {
     }
 
     initWebrtc() {
-        console.log('Initialize WebRTC connection...');
+        console.debug('Initialize WebRTC connection...');
 
         // Create RTC peer connection
-        const pc = new RTCPeerConnection({
+        this.pc = new RTCPeerConnection({
             iceServers: [{urls: ['stun:stun.services.mozilla.com']}],
         });
 
+        // Let the "negotiationneeded" event trigger offer generation
+        this.pc.onnegotiationneeded = (e) => {
+            console.debug('Negotiation needed...');
+            this.initiatorFlow();
+        };
+
+        // Handle state changes
+        this.pc.onsignalingstatechange = (e) => console.debug('RTC signaling state change:', e); // TODO: Does `e` contain the information?
+        this.pc.onconnectionstatechange = (e) => console.debug('RTC connection state change:', e); // TODO: Does `e` contain the information?
+        this.pc.oniceconnectionstatechange = (e) => console.debug('ICE connection state change:', this.pc.iceConnectionState);
+        this.pc.onicegatheringstatechange = (e) => console.debug('ICE gathering state change:', this.pc.iceGatheringState);
+
+        // Set up ICE candidate handling
+        this.setupIceCandidateHandling();
+
+        // Log incoming data channels
+        this.pc.ondatachannel = (e) => {
+            console.debug('New data channel was created:', e.channel.label);
+        }
+
+        // Request handover
+        this.task.handover(this.pc);
+    }
+
+    setupIceCandidateHandling() {
+        console.debug('Setting up ICE candidate handling...');
+        this.pc.onicecandidate = (e) => {
+            if (e.candidate) {
+                this.task.sendCandidate({
+                    candidate: e.candidate.candidate,
+                    sdpMid: e.candidate.sdpMid,
+                    sdpMLineIndex: e.candidate.sdpMLineIndex,
+                });
+            }
+        }
+        this.pc.onicecandidateerror = (e) => console.error('ICE candidate error:', e);
+
+        this.task.on('candidates', (e) => {
+            for (let candidateInit of e.data) {
+                this.pc.addIceCandidate(candidateInit);
+            }
+        });
+    }
+
+    initiatorFlow() {
         // Register answer handler
-        this.task.on('answer', (answer) => {
+        this.task.once('answer', (answer) => {
             console.debug('Set remote description');
-            pc.setRemoteDescription(answer).then(() => {
+            this.pc.setRemoteDescription(answer.data).then(() => {
                 console.info('WebRTC initialization done.');
             });
         });
 
         // Create offer
         console.debug('Create offer');
-        pc.createOffer().then((offer) => {
+        this.pc.createOffer().then((offer) => {
             console.debug('Set local description');
-            pc.setLocalDescription(offer).then(() => {
+            this.pc.setLocalDescription(offer).then(() => {
                 console.debug('Send offer to peer');
                 this.task.sendOffer(offer);
             });

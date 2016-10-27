@@ -20,8 +20,8 @@ import org.saltyrtc.client.exceptions.InvalidKeyException;
 import org.saltyrtc.client.helpers.HexHelper;
 import org.saltyrtc.client.keystore.KeyStore;
 import org.saltyrtc.client.tasks.Task;
+import org.saltyrtc.tasks.webrtc.SecureDataChannel;
 import org.saltyrtc.tasks.webrtc.WebRTCTask;
-import org.w3c.dom.Text;
 
 import java.security.NoSuchAlgorithmException;
 
@@ -33,10 +33,20 @@ public class MainActivity extends Activity {
 
 	private SaltyRTC client;
 	private WebRTCTask task;
+	private WebRTC webrtc;
+	private SecureDataChannel sdc;
 
 	private Button startButton;
 	private Button stopButton;
-	private TextView signalingState;
+	private TextView saltySignalingStateView;
+	private TextView rtcSignalingStateView;
+	private TextView rtcIceConnectionStateView;
+	private TextView rtcIceGatheringStateView;
+
+	private String saltySignalingState;
+	private String rtcSignalingState;
+	private String rtcIceConnectionState;
+	private String rtcIceGatheringState;
 
 	@SuppressLint("SetTextI18n")
 	@Override
@@ -44,13 +54,33 @@ public class MainActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
+		// Set key infos
 		((TextView)findViewById(R.id.public_key)).setText("Public key: " + Config.PUBLIC_KEY);
 		((TextView)findViewById(R.id.private_key)).setText("Private key: " + Config.PRIVATE_KEY);
 		((TextView)findViewById(R.id.trusted_key)).setText("Trusted key: " + Config.TRUSTED_KEY);
 
+		// Get button views
 		this.startButton = (Button) findViewById(R.id.button_start);
 		this.stopButton = (Button) findViewById(R.id.button_stop);
-		this.signalingState = (TextView) findViewById(R.id.state);
+
+		// Get state views
+		this.saltySignalingStateView = (TextView) findViewById(R.id.salty_signaling_state);
+		this.rtcSignalingStateView = (TextView) findViewById(R.id.rtc_signaling_state);
+		this.rtcIceConnectionStateView = (TextView) findViewById(R.id.rtc_ice_connection_state);
+		this.rtcIceGatheringStateView = (TextView) findViewById(R.id.rtc_ice_gathering_state);
+
+		// Initialize states
+		this.resetStates();
+	}
+
+	/**
+	 * Reset all states to "Unknown".
+	 */
+	private void resetStates() {
+		this.setState(StateType.SALTY_SIGNALING, "Unknown");
+		this.setState(StateType.RTC_SIGNALING, "Unknown");
+		this.setState(StateType.RTC_ICE_CONNECTION, "Unknown");
+		this.setState(StateType.RTC_ICE_GATHERING, "Unknown");
 	}
 
 	private SSLContext getSslContext() throws NoSuchAlgorithmException {
@@ -58,6 +88,8 @@ public class MainActivity extends Activity {
 	}
 
 	private void init() throws NoSuchAlgorithmException, InvalidKeyException {
+		this.resetStates();
+
 		final byte[] pubKey = HexHelper.hexStringToByteArray(Config.PUBLIC_KEY);
 		final byte[] privKey = HexHelper.hexStringToByteArray(Config.PRIVATE_KEY);
 		final byte[] trustedKey = HexHelper.hexStringToByteArray(Config.TRUSTED_KEY);
@@ -83,12 +115,7 @@ public class MainActivity extends Activity {
 	private EventHandler<SignalingStateChangedEvent> onSignalingStateChanged = new EventHandler<SignalingStateChangedEvent>() {
 		@Override
 		public boolean handle(final SignalingStateChangedEvent event) {
-			runOnUiThread(new Runnable() {
-				@Override
-				public void run() {
-					MainActivity.this.signalingState.setText(event.getState().name());
-				}
-			});
+			MainActivity.this.setState(StateType.SALTY_SIGNALING, event.getState().name());
 			return false;
 		}
 	};
@@ -130,6 +157,13 @@ public class MainActivity extends Activity {
 	};
 
 	/**
+	 * A new secure data channel was created.
+	 */
+	void onNewSdc(SecureDataChannel sdc) {
+		this.sdc = sdc;
+	}
+
+	/**
 	 * Start SaltyRTC client.
 	 *
 	 * Must be run on UI thread.
@@ -138,6 +172,7 @@ public class MainActivity extends Activity {
 		Log.d(LOG_TAG, "Starting SaltyRTC client...");
 		try {
 			this.init();
+			this.webrtc = new WebRTC(this.task, this);
 			this.client.connect();
 			this.startButton.setEnabled(false);
 			this.stopButton.setEnabled(true);
@@ -159,7 +194,40 @@ public class MainActivity extends Activity {
 		this.client.events.signalingConnectionLost.clear();
 		this.client.events.close.clear();
 		this.client = null;
+		this.webrtc = null;
 		this.startButton.setEnabled(true);
 		this.stopButton.setEnabled(false);
+	}
+
+	/**
+	 * Set a state field.
+	 *
+	 * This method may be called from a background thread.
+	 */
+	public void setState(final StateType type, final String state) {
+		runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				switch (type) {
+					case SALTY_SIGNALING:
+						MainActivity.this.saltySignalingState = state;
+						MainActivity.this.saltySignalingStateView.setText(state);
+						break;
+					case RTC_SIGNALING:
+						MainActivity.this.rtcSignalingState = state;
+						MainActivity.this.rtcSignalingStateView.setText(state);
+						break;
+					case RTC_ICE_CONNECTION:
+						MainActivity.this.rtcIceConnectionState = state;
+						MainActivity.this.rtcIceConnectionStateView.setText(state);
+						break;
+					case RTC_ICE_GATHERING:
+						MainActivity.this.rtcIceGatheringState = state;
+						MainActivity.this.rtcIceGatheringStateView.setText(state);
+						break;
+				}
+			}
+		});
+
 	}
 }
