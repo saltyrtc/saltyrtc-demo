@@ -24,7 +24,7 @@ class TestClient {
 
     onStateChange(newState) {
         console.debug('New state:', newState);
-        document.querySelector('#state').innerHTML = newState.data;
+        this.setState('saltySignaling', newState.data);
         if (newState.data == 'task') {
             const messages = document.querySelector('#messages');
             messages.classList.remove('disabled');
@@ -49,10 +49,23 @@ class TestClient {
         };
 
         // Handle state changes
-        this.pc.onsignalingstatechange = (e) => console.debug('RTC signaling state change:', e); // TODO: Does `e` contain the information?
-        this.pc.onconnectionstatechange = (e) => console.debug('RTC connection state change:', e); // TODO: Does `e` contain the information?
-        this.pc.oniceconnectionstatechange = (e) => console.debug('ICE connection state change:', this.pc.iceConnectionState);
-        this.pc.onicegatheringstatechange = (e) => console.debug('ICE gathering state change:', this.pc.iceGatheringState);
+        this.pc.onsignalingstatechange = (e) => {
+            console.debug('RTC signaling state change:', this.pc.signalingState);
+            this.setState('rtcSignaling', this.pc.signalingState);
+        };
+        this.pc.onconnectionstatechange = (e) => {
+            console.debug('RTC connection state change:', e); // TODO: Does `e` contain the information?
+            this.setState('rtcConnection', this.pc.connectionState);
+        };
+        this.pc.oniceconnectionstatechange = (e) => {
+            console.debug('ICE connection state change:', this.pc.iceConnectionState);
+            this.setState('iceConnection', this.pc.iceConnectionState);
+        };
+        this.pc.onicegatheringstatechange = (e) => {
+            // TODO: This doesn't currently seem to be called by Chromium / Firefox
+            console.debug('ICE gathering state change:', this.pc.iceGatheringState);
+            this.setState('iceGathering', this.pc.iceGatheringState);
+        }
 
         // Set up ICE candidate handling
         this.setupIceCandidateHandling();
@@ -76,6 +89,7 @@ class TestClient {
                     sdpMLineIndex: e.candidate.sdpMLineIndex,
                 });
             }
+            this.setState('iceGathering', this.pc.iceGatheringState);
         }
         this.pc.onicecandidateerror = (e) => console.error('ICE candidate error:', e);
 
@@ -106,10 +120,19 @@ class TestClient {
         });
     }
 
+    setState(type, value) {
+        document.querySelector('#' + type + 'State').innerHTML = value;
+    }
+
 }
 
 
 ready(() => {
-    let client = new TestClient();
-    client.start();
+    let testClient = new TestClient();
+
+    console.info('For debugging purposes, the test client instance is exposed as `window.client`.');
+    window.client = testClient;
+
+    testClient.start();
+
 });

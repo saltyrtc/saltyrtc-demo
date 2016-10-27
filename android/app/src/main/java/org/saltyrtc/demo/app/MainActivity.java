@@ -43,11 +43,6 @@ public class MainActivity extends Activity {
 	private TextView rtcIceConnectionStateView;
 	private TextView rtcIceGatheringStateView;
 
-	private String saltySignalingState;
-	private String rtcSignalingState;
-	private String rtcIceConnectionState;
-	private String rtcIceGatheringState;
-
 	@SuppressLint("SetTextI18n")
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -210,19 +205,15 @@ public class MainActivity extends Activity {
 			public void run() {
 				switch (type) {
 					case SALTY_SIGNALING:
-						MainActivity.this.saltySignalingState = state;
 						MainActivity.this.saltySignalingStateView.setText(state);
 						break;
 					case RTC_SIGNALING:
-						MainActivity.this.rtcSignalingState = state;
 						MainActivity.this.rtcSignalingStateView.setText(state);
 						break;
 					case RTC_ICE_CONNECTION:
-						MainActivity.this.rtcIceConnectionState = state;
 						MainActivity.this.rtcIceConnectionStateView.setText(state);
 						break;
 					case RTC_ICE_GATHERING:
-						MainActivity.this.rtcIceGatheringState = state;
 						MainActivity.this.rtcIceGatheringStateView.setText(state);
 						break;
 				}

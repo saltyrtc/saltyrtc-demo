@@ -18,7 +18,7 @@
             textarea {
                 width: 100%;
                 height: 300px;
-                margin: 0;
+                margin: 0 0 20px;
                 padding: 0;
             }
             #input {
@@ -43,12 +43,40 @@
     </head>
     <body>
         <h1>SaltyRTC Demo</h1>
+
+        <h2>Keys</h2>
         <p>
             * Public key: <code>424280166304526b4a2874a2270d091071fcc5c98959f7d4718715626df26204</code><br>
-            * Secret key: <code>74d427ae6a95dedde68850e0ff9da952acf69e6e41436230f126fbd220e1faea</code>
+            * Secret key: <code>74d427ae6a95dedde68850e0ff9da952acf69e6e41436230f126fbd220e1faea</code><br>
+            * Trusted key: <code>232385faea4c0fca2c867bfb7ca74f634178ee0bc13364ee738e02cd4318e839</code>
         </p>
-        <div id="state-wrapper">Signaling state: <span id="state">unknown</span> <img id="loading" src="ajax-loader.gif" alt="Loading..."></div>
+
+        <h2>States</h2>
+        <table id="state-wrapper">
+            <tr>
+                <td>SaltyRTC signaling state</td>
+                <td><span id="saltySignalingState">unknown</span> <img id="loading" src="ajax-loader.gif" alt="Loading..."></td>
+            </tr>
+            <tr>
+                <td>PeerConnection signaling state</td>
+                <td><span id="rtcSignalingState">unknown</span></td>
+            </tr>
+            <tr>
+                <td>PeerConnection connection state</td>
+                <td><span id="rtcConnectionState">unknown</span></td>
+            </tr>
+            <tr>
+                <td>ICE connection state</td>
+                <td><span id="iceConnectionState">unknown</span></td>
+            </tr>
+            <tr>
+                <td>ICE gathering state</td>
+                <td><span id="iceGatheringState">unknown</span></td>
+            </tr>
+        </table>
+
         <div id="messages" class="disabled">
+            <h2>Messaging</h2>
             <div id="output">
                 <textarea></textarea>
             </div>
