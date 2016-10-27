@@ -30,7 +30,35 @@ class TestClient {
             messages.classList.remove('disabled');
             const loading = document.querySelector('#loading');
             loading.parentNode.removeChild(loading);
+            this.initWebrtc();
         }
+    }
+
+    initWebrtc() {
+        console.log('Initialize WebRTC connection...');
+
+        // Create RTC peer connection
+        const pc = new RTCPeerConnection({
+            iceServers: [{urls: ['stun:stun.services.mozilla.com']}],
+        });
+
+        // Register answer handler
+        this.task.on('answer', (answer) => {
+            console.debug('Set remote description');
+            pc.setRemoteDescription(answer).then(() => {
+                console.info('WebRTC initialization done.');
+            });
+        });
+
+        // Create offer
+        console.debug('Create offer');
+        pc.createOffer().then((offer) => {
+            console.debug('Set local description');
+            pc.setLocalDescription(offer).then(() => {
+                console.debug('Send offer to peer');
+                this.task.sendOffer(offer);
+            });
+        });
     }
 
 }

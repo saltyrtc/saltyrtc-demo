@@ -24,12 +24,15 @@
             #input {
                 display: flex;
             }
-            input[type=text] {
+            #input input[type=text] {
                 flex-grow: 1;
                 margin-left: 10px;
-                margin-right: 10px;
+            }
+            #input button {
+                margin-left: 10px;
             }
         </style>
+        <script src="node_modules/webrtc-adapter/out/adapter_no_edge.js"></script>
         <script src="node_modules/msgpack-lite/dist/msgpack.min.js"></script>
         <script src="node_modules/tweetnacl/nacl-fast.min.js"></script>
         <script src="node_modules/chunked-dc/dist/chunked-dc.es5.min.js"></script>
@@ -50,7 +53,7 @@
                 <textarea></textarea>
             </div>
             <div id="input">
-            Text: <input type="text"> <button>Submit</button>
+            Text: <input type="text"> <button>Submit via Signaling</button> <button>Submit via DataChannel</button>
             </div>
         </div>
     </body>
