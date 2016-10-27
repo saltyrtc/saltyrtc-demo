@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/activity_main"
@@ -9,7 +9,6 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    android:orientation="vertical"
     tools:context="org.saltyrtc.demo.app.MainActivity">
 
     <TextView
@@ -22,18 +21,49 @@
         android:id="@+id/private_key"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_below="@id/public_key"
         android:text="@string/loading"/>
 
     <TextView
         android:id="@+id/trusted_key"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_below="@id/private_key"
         android:text="@string/loading"/>
 
     <Button
+        android:id="@+id/button_start"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_below="@id/trusted_key"
         android:onClick="start"
         android:text="@string/button_start"/>
 
-</LinearLayout>
+    <Button
+        android:id="@+id/button_stop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/trusted_key"
+        android:layout_toEndOf="@id/button_start"
+        android:onClick="stop"
+        android:text="@string/button_stop"
+        android:enabled="false"/>
+
+    <TextView
+        android:id="@+id/state_prefix"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/button_start"
+        android:text="Signaling status: "
+        tools:ignore="HardcodedText"/>
+
+    <TextView
+        android:id="@+id/state"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/button_start"
+        android:layout_toEndOf="@id/state_prefix"
+        android:text="UNKNOWN"
+        tools:ignore="HardcodedText"/>
+
+</RelativeLayout>
