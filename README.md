@@ -22,8 +22,8 @@ point them to a [SaltyRTC server][server] instance. Then simply open
 Make sure that the Android SDK is installed and configured properly.
 
 Then, adjust the `HOST` and `PORT` variables in the
-`app/src/main/java/org/saltyrtc/demo/app/Config.java` directory and point them
-to a [SaltyRTC server][server] instance.
+`app/src/main/java/org/saltyrtc/demo/app/Config.java` file and point them to a
+[SaltyRTC server][server] instance.
 
 Finally, connect an Android 5.0+ device with USB debugging enabled to your
 computer and run the following command:
