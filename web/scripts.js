@@ -28,6 +28,8 @@ class TestClient {
             .usingTasks([this.task])
             .asInitiator();
         this.client.on('state-change', this.onStateChange.bind(this));
+        this.client.on('connection-error', this.onConnectionError.bind(this));
+        this.client.on('connection-closed', this.onConnectionClosed.bind(this));
         this.client.connect();
 
         document.querySelector('#sendSignaling').onclick = () => alert('Not yet implemented');
@@ -44,6 +46,14 @@ class TestClient {
             loading.parentNode.removeChild(loading);
             this.initWebrtc();
         }
+    }
+
+    onConnectionError(ev) {
+        console.debug('Connection error:', ev);
+    }
+
+    onConnectionClosed(closeCode) {
+        console.debug('Connection was closed with code', closeCode);
     }
 
     initWebrtc() {
