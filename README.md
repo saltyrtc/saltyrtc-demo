@@ -3,7 +3,7 @@
 Small demo application with a web interface and an Android app that communicate
 over the signaling channel as well as via WebRTC.
 
-<img src="web/screenshot.png" width="455">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src="android/screenshot.png" width="281">
+<img src="web/screenshot.png" width="455">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src="android/screenshot.png" width="252">
 
 ## Usage
 
