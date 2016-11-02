@@ -9,6 +9,8 @@ package org.saltyrtc.demo.app;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.TypedValue;
@@ -69,11 +71,6 @@ public class MainActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-
-		// Set key infos
-		((TextView) findViewById(R.id.public_key)).setText("Public key: " + Config.PUBLIC_KEY);
-		((TextView) findViewById(R.id.private_key)).setText("Private key: " + Config.PRIVATE_KEY);
-		((TextView) findViewById(R.id.trusted_key)).setText("Trusted key: " + Config.TRUSTED_KEY);
 
 		// Get button views
 		this.startButton = (Button) findViewById(R.id.button_start);
@@ -360,4 +357,33 @@ public class MainActivity extends Activity {
 		});
 		this.textInput.setText("");
 	}
+
+
+	/**
+	 * Show key info.
+	 */
+	public void showKeyInfo(View view) {
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setCancelable(true);
+		builder.setTitle("Key Info");
+		StringBuilder msgBuilder = new StringBuilder();
+		msgBuilder.append("Public key: ");
+		msgBuilder.append(Config.PUBLIC_KEY);
+		msgBuilder.append("\n\n");
+		msgBuilder.append("Private key: ");
+		msgBuilder.append(Config.PRIVATE_KEY);
+		msgBuilder.append("\n\n");
+		msgBuilder.append("Trusted key: ");
+		msgBuilder.append(Config.TRUSTED_KEY);
+		msgBuilder.append("\n\n");
+		builder.setMessage(msgBuilder.toString());
+		builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialogInterface, int i) {
+				dialogInterface.dismiss();
+			}
+		});
+		builder.create().show();
+	}
+
 }

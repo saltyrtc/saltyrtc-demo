@@ -11,31 +11,10 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="org.saltyrtc.demo.app.MainActivity">
 
-    <TextView
-        android:id="@+id/public_key"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/loading"/>
-
-    <TextView
-        android:id="@+id/private_key"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/public_key"
-        android:text="@string/loading"/>
-
-    <TextView
-        android:id="@+id/trusted_key"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/private_key"
-        android:text="@string/loading"/>
-
     <Button
         android:id="@+id/button_start"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/trusted_key"
         android:onClick="start"
         android:text="@string/button_start"/>
 
@@ -43,11 +22,19 @@
         android:id="@+id/button_stop"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/trusted_key"
         android:layout_toEndOf="@id/button_start"
         android:onClick="stop"
         android:text="@string/button_stop"
         android:enabled="false"/>
+
+    <Button
+        android:id="@+id/button_key_info"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:onClick="showKeyInfo"
+        android:text="Key Info"/>
+
 
     <LinearLayout
         android:id="@+id/status_info"
