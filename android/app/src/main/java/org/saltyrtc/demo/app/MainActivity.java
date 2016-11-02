@@ -11,8 +11,13 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import org.saltyrtc.client.SaltyRTC;
@@ -33,6 +38,8 @@ import org.saltyrtc.tasks.webrtc.WebRTCTask;
 import org.webrtc.DataChannel;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 
 import javax.net.ssl.SSLContext;
@@ -52,6 +59,10 @@ public class MainActivity extends Activity {
 	private TextView rtcSignalingStateView;
 	private TextView rtcIceConnectionStateView;
 	private TextView rtcIceGatheringStateView;
+	private LinearLayout messagesLayout;
+	private ScrollView messagesScrollView;
+	private EditText textInput;
+	private Button sendButton;
 
 	@SuppressLint("SetTextI18n")
 	@Override
@@ -60,9 +71,9 @@ public class MainActivity extends Activity {
 		setContentView(R.layout.activity_main);
 
 		// Set key infos
-		((TextView)findViewById(R.id.public_key)).setText("Public key: " + Config.PUBLIC_KEY);
-		((TextView)findViewById(R.id.private_key)).setText("Private key: " + Config.PRIVATE_KEY);
-		((TextView)findViewById(R.id.trusted_key)).setText("Trusted key: " + Config.TRUSTED_KEY);
+		((TextView) findViewById(R.id.public_key)).setText("Public key: " + Config.PUBLIC_KEY);
+		((TextView) findViewById(R.id.private_key)).setText("Private key: " + Config.PRIVATE_KEY);
+		((TextView) findViewById(R.id.trusted_key)).setText("Trusted key: " + Config.TRUSTED_KEY);
 
 		// Get button views
 		this.startButton = (Button) findViewById(R.id.button_start);
@@ -73,6 +84,12 @@ public class MainActivity extends Activity {
 		this.rtcSignalingStateView = (TextView) findViewById(R.id.rtc_signaling_state);
 		this.rtcIceConnectionStateView = (TextView) findViewById(R.id.rtc_ice_connection_state);
 		this.rtcIceGatheringStateView = (TextView) findViewById(R.id.rtc_ice_gathering_state);
+
+		// Get other views
+		this.messagesLayout = (LinearLayout) findViewById(R.id.messages);
+		this.messagesScrollView = (ScrollView) findViewById(R.id.messagesScroll);
+		this.textInput = (EditText) findViewById(R.id.chat_input);
+		this.sendButton = (Button) findViewById(R.id.send_button);
 
 		// Initialize states
 		this.resetStates();
@@ -104,7 +121,7 @@ public class MainActivity extends Activity {
 				.connectTo(Config.HOST, Config.PORT, this.getSslContext())
 				.withKeyStore(permanentKey)
 				.withTrustedPeerKey(trustedKey)
-				.usingTasks(new Task[] { this.task })
+				.usingTasks(new Task[]{this.task})
 				.asResponder();
 
 		// On signaling
@@ -123,6 +140,13 @@ public class MainActivity extends Activity {
 			MainActivity.this.setState(StateType.SALTY_SIGNALING, event.getState().name());
 			if (SignalingState.TASK == event.getState()) {
 				MainActivity.this.webrtc.handover();
+				runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						MainActivity.this.textInput.setVisibility(View.VISIBLE);
+						MainActivity.this.sendButton.setVisibility(View.VISIBLE);
+					}
+				});
 			}
 			return false;
 		}
@@ -179,6 +203,12 @@ public class MainActivity extends Activity {
 				Log.d(LOG_TAG, "State changed: " + sdc.state());
 			}
 
+			/**
+			 * Handle incoming messages.
+			 *
+			 * SaltyRTC only supports binary data, so we encode data as UTF8 on
+			 * the browser side and decode the string from UTF8 Here.
+			 */
 			@Override
 			public void onMessage(DataChannel.Buffer buffer) {
 				final byte[] bytes = buffer.data.array();
@@ -191,6 +221,7 @@ public class MainActivity extends Activity {
 					return;
 				}
 				Log.d(LOG_TAG, "Message is: " + message);
+				MainActivity.this.onMessage(message);
 			}
 		});
 		this.sdc = sdc;
@@ -209,6 +240,7 @@ public class MainActivity extends Activity {
 			this.client.connect();
 			this.startButton.setEnabled(false);
 			this.stopButton.setEnabled(true);
+			this.messagesLayout.removeAllViewsInLayout();
 		} catch (NoSuchAlgorithmException | InvalidKeyException | ConnectionException e) {
 			e.printStackTrace();
 		}
@@ -230,6 +262,8 @@ public class MainActivity extends Activity {
 		this.webrtc = null;
 		this.startButton.setEnabled(true);
 		this.stopButton.setEnabled(false);
+		this.textInput.setVisibility(View.INVISIBLE);
+		this.sendButton.setVisibility(View.INVISIBLE);
 	}
 
 	/**
@@ -258,5 +292,72 @@ public class MainActivity extends Activity {
 			}
 		});
 
+	}
+
+	private TextView getMessageTextView(int colorResource, String text) {
+		// Create text view
+		final TextView view = new TextView(this);
+		view.setText(text);
+		view.setBackgroundColor(getResources().getColor(colorResource));
+
+		// Set layout parameters
+		final LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+				ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+		final int spacing = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, this.getResources().getDisplayMetrics());
+		params.setMargins(spacing, spacing, spacing, 0);
+		view.setPadding(spacing, spacing, spacing, spacing);
+		view.setLayoutParams(params);
+
+		return view;
+	}
+
+	/**
+	 * Show message and scroll to bottom.
+	 *
+	 * Must be run on UI thread.
+	 */
+	private void showMessage(final View view) {
+		MainActivity.this.messagesLayout.addView(view);
+		MainActivity.this.messagesScrollView.post(new Runnable() {
+			@Override
+			public void run() {
+				MainActivity.this.messagesScrollView.fullScroll(ScrollView.FOCUS_DOWN);
+			}
+		});
+	}
+
+	/**
+	 * Handle incoming message.
+	 *
+	 * This method may be called from a background thread.
+	 */
+	public void onMessage(String message) {
+		final View view = this.getMessageTextView(R.color.colorMessageIn, message);
+		runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				MainActivity.this.showMessage(view);
+			}
+		});
+	}
+
+	/**
+	 * Send message via DC.
+	 *
+	 * Must be run on UI thread.
+	 */
+	public void sendDc(View view) {
+		Log.d(LOG_TAG, "Sending message...");
+		final String text = this.textInput.getText().toString();
+		final ByteBuffer bytes = StandardCharsets.UTF_8.encode(text);
+		this.sdc.send(new DataChannel.Buffer(bytes, true));
+		final View msgView = this.getMessageTextView(R.color.colorMessageOut, text);
+		runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				MainActivity.this.showMessage(msgView);
+			}
+		});
+		this.textInput.setText("");
 	}
 }

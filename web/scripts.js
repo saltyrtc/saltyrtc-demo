@@ -125,6 +125,14 @@ class TestClient {
                 console.error('Secure data channel was closed');
                 this.setState('dataChannel', this.sdc.readyState);
             };
+            this.sdc.onmessage = (ev) => {
+                const messages = document.querySelector('textarea')
+                const bytes = new Uint8Array(ev.data);
+                const text = utf8aToString(bytes);
+                console.log(text);
+                console.debug('New incoming message:', bytes.length, 'bytes');
+                messages.value += '< ' + text + '\n';
+            };
         });
     }
 
@@ -175,10 +183,12 @@ class TestClient {
 
     sendDc() {
         const input = document.querySelector('#chatText')
+        const messages = document.querySelector('textarea')
         const text = input.value;
         const bytes = stringToUtf8a(text);
         console.debug('Sending', bytes.length, 'bytes:', bytes);
         this.sdc.send(bytes);
+        messages.value += '> ' + text + '\n';
         input.value = '';
     }
 

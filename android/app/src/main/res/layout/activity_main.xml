@@ -50,6 +50,7 @@
         android:enabled="false"/>
 
     <LinearLayout
+        android:id="@+id/status_info"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/button_start"
@@ -124,5 +125,43 @@
         </LinearLayout>
 
     </LinearLayout>
+
+    <Button
+        android:id="@+id/send_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:visibility="invisible"
+        android:onClick="sendDc"
+        android:text="Send via DC"/>
+
+    <EditText
+        android:id="@+id/chat_input"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentBottom="true"
+        android:layout_toStartOf="@id/send_button"
+        android:visibility="invisible"
+        android:hint="Enter text"/>
+
+    <ScrollView
+        android:id="@+id/messagesScroll"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_below="@id/status_info"
+        android:layout_above="@id/send_button"
+        android:background="#dddddd"
+        android:layout_marginTop="8dp">
+        <LinearLayout
+            android:id="@+id/messages"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="8dp"
+            android:orientation="vertical">
+        </LinearLayout>
+    </ScrollView>
 
 </RelativeLayout>
