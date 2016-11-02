@@ -30,7 +30,9 @@ import org.saltyrtc.client.signaling.state.SignalingState;
 import org.saltyrtc.client.tasks.Task;
 import org.saltyrtc.tasks.webrtc.SecureDataChannel;
 import org.saltyrtc.tasks.webrtc.WebRTCTask;
+import org.webrtc.DataChannel;
 
+import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 
 import javax.net.ssl.SSLContext;
@@ -165,7 +167,32 @@ public class MainActivity extends Activity {
 	/**
 	 * A new secure data channel was created.
 	 */
-	void onNewSdc(SecureDataChannel sdc) {
+	void onNewSdc(final SecureDataChannel sdc) {
+		sdc.registerObserver(new DataChannel.Observer() {
+			@Override
+			public void onBufferedAmountChange(long l) {
+				Log.d(LOG_TAG, "Buffered amount changed: " + l);
+			}
+
+			@Override
+			public void onStateChange() {
+				Log.d(LOG_TAG, "State changed: " + sdc.state());
+			}
+
+			@Override
+			public void onMessage(DataChannel.Buffer buffer) {
+				final byte[] bytes = buffer.data.array();
+				Log.d(LOG_TAG, "New incoming message: " + bytes.length + " bytes");
+				String message;
+				try {
+					message = new String(bytes, "UTF-8");
+				} catch (UnsupportedEncodingException e) {
+					e.printStackTrace();
+					return;
+				}
+				Log.d(LOG_TAG, "Message is: " + message);
+			}
+		});
 		this.sdc = sdc;
 	}
 
