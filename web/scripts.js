@@ -18,14 +18,12 @@ const DC_LABEL = 'much-secure';
 class TestClient {
 
     start() {
-		const pubKey = hexToU8a(PUBLIC_KEY);
-		const privKey = hexToU8a(PRIVATE_KEY);
-        const permanentKey = new saltyrtcClient.KeyStore(pubKey, privKey);
+        const permanentKey = new saltyrtcClient.KeyStore(PUBLIC_KEY, PRIVATE_KEY);
         this.task = new saltyrtcTaskWebrtc.WebRTCTask();
         this.client = new saltyrtcClient.SaltyRTCBuilder()
             .connectTo(HOST, PORT)
             .withKeyStore(permanentKey)
-            .withTrustedPeerKey(hexToU8a(TRUSTED_KEY))
+            .withTrustedPeerKey(TRUSTED_KEY)
             .usingTasks([this.task])
             .asInitiator();
         this.client.on('state-change', this.onStateChange.bind(this));
