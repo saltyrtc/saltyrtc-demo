@@ -24,6 +24,7 @@ class TestClient {
             .connectTo(HOST, PORT)
             .withKeyStore(permanentKey)
             .withTrustedPeerKey(TRUSTED_KEY)
+            .withPingInterval(30)
             .usingTasks([this.task])
             .asInitiator();
         this.client.on('state-change', this.onStateChange.bind(this));
