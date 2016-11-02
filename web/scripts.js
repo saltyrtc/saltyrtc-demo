@@ -33,7 +33,7 @@ class TestClient {
         this.client.connect();
 
         document.querySelector('#sendSignaling').onclick = () => alert('Not yet implemented');
-        document.querySelector('#sendDc').onclick = () => alert('Not yet implemented');
+        document.querySelector('#sendDc').onclick = this.sendDc.bind(this);
     }
 
     onStateChange(newState) {
@@ -109,7 +109,7 @@ class TestClient {
             dc.binaryType = 'arraybuffer';
             this.sdc = this.task.wrapDataChannel(dc);
             this.sdc.onopen = () => {
-                console.info('Secure data channel is open');
+                console.info('Custom secure data channel is open');
                 this.setState('dataChannel', this.sdc.readyState);
                 setInterval(() => {
                     if (this.sdc != null) {
@@ -171,6 +171,15 @@ class TestClient {
 
     setState(type, value) {
         document.querySelector('#' + type + 'State').innerHTML = value;
+    }
+
+    sendDc() {
+        const input = document.querySelector('#chatText')
+        const text = input.value;
+        const bytes = stringToUtf8a(text);
+        console.debug('Sending', bytes.length, 'bytes:', bytes);
+        this.sdc.send(bytes);
+        input.value = '';
     }
 
 }
