@@ -24,7 +24,7 @@ import org.webrtc.SessionDescription;
 import java.util.ArrayList;
 import java.util.List;
 
-public class WebRTC {
+class WebRTC {
 
 	private static final String LOG_TAG = WebRTC.class.getName();
 	private static final String DC_LABEL = "much-secure";
@@ -34,7 +34,7 @@ public class WebRTC {
 	private final MediaConstraints constraints;
 	private final MainActivity activity;
 
-	public WebRTC(WebRTCTask task, MainActivity activity) {
+	WebRTC(WebRTCTask task, MainActivity activity) {
 		this.task = task;
 		this.activity = activity;
 
@@ -224,6 +224,13 @@ public class WebRTC {
 		public void onRenegotiationNeeded() {
 			Log.d(LOG_TAG, "Renegotiation needed");
 		}
+	}
+
+	/**
+	 * Initiate handover.
+	 */
+	void handover() {
+		this.task.handover(this.pc);
 	}
 
 }

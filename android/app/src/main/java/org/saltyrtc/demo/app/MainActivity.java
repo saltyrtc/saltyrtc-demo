@@ -26,6 +26,7 @@ import org.saltyrtc.client.exceptions.ConnectionException;
 import org.saltyrtc.client.exceptions.InvalidKeyException;
 import org.saltyrtc.client.helpers.HexHelper;
 import org.saltyrtc.client.keystore.KeyStore;
+import org.saltyrtc.client.signaling.state.SignalingState;
 import org.saltyrtc.client.tasks.Task;
 import org.saltyrtc.tasks.webrtc.SecureDataChannel;
 import org.saltyrtc.tasks.webrtc.WebRTCTask;
@@ -118,6 +119,9 @@ public class MainActivity extends Activity {
 		@Override
 		public boolean handle(final SignalingStateChangedEvent event) {
 			MainActivity.this.setState(StateType.SALTY_SIGNALING, event.getState().name());
+			if (SignalingState.TASK == event.getState()) {
+				MainActivity.this.webrtc.handover();
+			}
 			return false;
 		}
 	};
