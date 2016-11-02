@@ -132,6 +132,7 @@ class TestClient {
                 console.log(text);
                 console.debug('New incoming message:', bytes.length, 'bytes');
                 messages.value += '< ' + text + '\n';
+                messages.scrollTop = messages.scrollHeight;
             };
         });
     }
@@ -190,6 +191,7 @@ class TestClient {
         this.sdc.send(bytes);
         messages.value += '> ' + text + '\n';
         input.value = '';
+        messages.scrollTop = messages.scrollHeight;
     }
 
 }
