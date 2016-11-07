@@ -248,8 +248,14 @@ public class MainActivity extends Activity {
 	 *
 	 * Must be run on UI thread.
 	 */
-	public void stop(View view) {
-		Log.d(LOG_TAG, "Stoppping SaltyRTC client...");
+	public synchronized void stop(View view) {
+		if (this.sdc != null) {
+			Log.d(LOG_TAG, "Closing secure data channel...");
+			this.sdc.close();
+			this.sdc.dispose();
+		}
+
+		Log.d(LOG_TAG, "Stopping SaltyRTC client...");
 		this.client.disconnect();
 		this.client.events.signalingStateChanged.clear();
 		this.client.events.handover.clear();
@@ -257,6 +263,7 @@ public class MainActivity extends Activity {
 		this.client.events.close.clear();
 		this.client = null;
 		this.webrtc = null;
+
 		this.startButton.setEnabled(true);
 		this.stopButton.setEnabled(false);
 		this.textInput.setVisibility(View.INVISIBLE);
