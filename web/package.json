@@ -6,8 +6,8 @@
   "license": "MIT",
   "homepage": "https://saltyrtc.org/",
   "dependencies": {
-    "saltyrtc-client": "^0.3.1",
-    "saltyrtc-task-webrtc": "^0.3.2",
+    "saltyrtc-client": "^0.4.0",
+    "saltyrtc-task-webrtc": "^0.4.0",
     "tweetnacl": "^0.14.3",
     "webrtc-adapter": "^2.0.5"
   }
