@@ -12,6 +12,10 @@ const PRIVATE_KEY = '74d427ae6a95dedde68850e0ff9da952acf69e6e41436230f126fbd220e
 const TRUSTED_KEY = '232385faea4c0fca2c867bfb7ca74f634178ee0bc13364ee738e02cd4318e839';
 const HOST = 'saltyrtc.example.org';
 const PORT = 8765;
+const STUN_SERVER = 'stun.services.mozilla.com';
+const TURN_SERVER = null;
+const TURN_USER = null;
+const TURN_PASS = null;
 const DC_LABEL = 'much-secure';
 
 
@@ -60,9 +64,16 @@ class TestClient {
         console.debug('Initialize WebRTC connection...');
 
         // Create RTC peer connection
-        this.pc = new RTCPeerConnection({
-            iceServers: [{urls: ['stun:stun.services.mozilla.com']}],
-        });
+        let iceServers = [{urls: ['stun:' + STUN_SERVER]}];
+        if (TURN_SERVER !== null) {
+            iceServers.push({
+                urls: ['turn:' + TURN_SERVER],
+                username: TURN_USER,
+                credential: TURN_PASS,
+                credentialType: 'password',
+            })
+        }
+        this.pc = new RTCPeerConnection({iceServers: iceServers});
 
         // Let the "negotiationneeded" event trigger offer generation
         this.pc.onnegotiationneeded = (e) => {
