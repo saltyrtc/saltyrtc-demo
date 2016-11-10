@@ -29,7 +29,7 @@ dependencies {
     })
     testCompile 'junit:junit:4.12'
 
-    compile('org.saltyrtc.client:saltyrtc-client:0.6.1', {
+    compile('org.saltyrtc.client:saltyrtc-client:0.6.2', {
         exclude group: 'org.json', module: 'json'
     })
     compile 'org.saltyrtc.tasks.webrtc:saltyrtc-task-webrtc:0.3.0'
