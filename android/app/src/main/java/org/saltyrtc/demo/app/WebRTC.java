@@ -47,9 +47,10 @@ class WebRTC {
 
 		// Set ICE servers
 		List<PeerConnection.IceServer> iceServers = new ArrayList<>();
-		iceServers.add(new org.webrtc.PeerConnection.IceServer(
-				"stun:stun.services.mozilla.com"
-		));
+		iceServers.add(new org.webrtc.PeerConnection.IceServer("stun:" + Config.STUN_SERVER));
+		if (Config.TURN_SERVER != null) {
+			iceServers.add(new org.webrtc.PeerConnection.IceServer("turn:" + Config.TURN_SERVER));
+		}
 
 		// Create peer connection
 		final PeerConnectionFactory.Options options = new PeerConnectionFactory.Options();
