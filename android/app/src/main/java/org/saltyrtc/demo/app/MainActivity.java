@@ -31,7 +31,6 @@ import org.saltyrtc.client.events.SignalingConnectionLostEvent;
 import org.saltyrtc.client.events.SignalingStateChangedEvent;
 import org.saltyrtc.client.exceptions.ConnectionException;
 import org.saltyrtc.client.exceptions.InvalidKeyException;
-import org.saltyrtc.client.helpers.HexHelper;
 import org.saltyrtc.client.keystore.KeyStore;
 import org.saltyrtc.client.signaling.state.SignalingState;
 import org.saltyrtc.client.tasks.Task;
@@ -109,15 +108,12 @@ public class MainActivity extends Activity {
 	private void init() throws NoSuchAlgorithmException, InvalidKeyException {
 		this.resetStates();
 
-		final byte[] pubKey = HexHelper.hexStringToByteArray(Config.PUBLIC_KEY);
-		final byte[] privKey = HexHelper.hexStringToByteArray(Config.PRIVATE_KEY);
-		final byte[] trustedKey = HexHelper.hexStringToByteArray(Config.TRUSTED_KEY);
-		final KeyStore permanentKey = new KeyStore(pubKey, privKey);
+		final KeyStore permanentKey = new KeyStore(Config.PUBLIC_KEY, Config.PRIVATE_KEY);
 		this.task = new WebRTCTask();
 		this.client = new SaltyRTCBuilder()
 				.connectTo(Config.HOST, Config.PORT, this.getSslContext())
 				.withKeyStore(permanentKey)
-				.withTrustedPeerKey(trustedKey)
+				.withTrustedPeerKey(Config.TRUSTED_KEY)
 				.usingTasks(new Task[]{this.task})
 				.asResponder();
 
