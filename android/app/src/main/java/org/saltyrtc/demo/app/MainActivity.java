@@ -24,6 +24,7 @@ import android.widget.TextView;
 
 import org.saltyrtc.client.SaltyRTC;
 import org.saltyrtc.client.SaltyRTCBuilder;
+import org.saltyrtc.client.events.ApplicationDataEvent;
 import org.saltyrtc.client.events.CloseEvent;
 import org.saltyrtc.client.events.EventHandler;
 import org.saltyrtc.client.events.HandoverEvent;
@@ -121,6 +122,7 @@ public class MainActivity extends Activity {
 		// On signaling
 		this.client.events.signalingStateChanged.register(this.onSignalingStateChanged);
 		this.client.events.handover.register(this.onHandover);
+		this.client.events.applicationData.register(this.onApplicationData);
 		this.client.events.close.register(this.onClose);
 		this.client.events.signalingConnectionLost.register(this.onSignalingConnectionLost);
 	}
@@ -152,6 +154,33 @@ public class MainActivity extends Activity {
 	private EventHandler<HandoverEvent> onHandover = new EventHandler<HandoverEvent>() {
 		@Override
 		public boolean handle(final HandoverEvent event) {
+			return false;
+		}
+	};
+
+	/**
+	 * On application message.
+	 */
+	private EventHandler<ApplicationDataEvent> onApplicationData = new EventHandler<ApplicationDataEvent>() {
+		/**
+		 * To avoid string type compatibility problems, we encode data as UTF8 on the
+		 * browser side and decode the string from UTF8 here.
+		 */
+		@Override
+		public boolean handle(ApplicationDataEvent event) {
+			final byte[] bytes = (byte[]) event.getData();
+			Log.d(LOG_TAG, "New incoming application message: " + bytes.length + " bytes");
+
+			String message;
+			try {
+				message = new String(bytes, "UTF-8");
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+				return false;
+			}
+
+			Log.d(LOG_TAG, "Message is: " + message);
+			MainActivity.this.onMessage(message);
 			return false;
 		}
 	};
@@ -201,12 +230,12 @@ public class MainActivity extends Activity {
 			 * Handle incoming messages.
 			 *
 			 * SaltyRTC only supports binary data, so we encode data as UTF8 on
-			 * the browser side and decode the string from UTF8 Here.
+			 * the browser side and decode the string from UTF8 here.
 			 */
 			@Override
 			public void onMessage(DataChannel.Buffer buffer) {
 				final byte[] bytes = buffer.data.array();
-				Log.d(LOG_TAG, "New incoming message: " + bytes.length + " bytes");
+				Log.d(LOG_TAG, "New incoming datachannel message: " + bytes.length + " bytes");
 				String message;
 				try {
 					message = new String(bytes, "UTF-8");
@@ -256,6 +285,7 @@ public class MainActivity extends Activity {
 		this.client.disconnect();
 		this.client.events.signalingStateChanged.clear();
 		this.client.events.handover.clear();
+		this.client.events.applicationData.clear();
 		this.client.events.signalingConnectionLost.clear();
 		this.client.events.close.clear();
 		this.client = null;
