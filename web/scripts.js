@@ -36,7 +36,7 @@ class TestClient {
         this.client.on('connection-closed', this.onConnectionClosed.bind(this));
         this.client.connect();
 
-        document.querySelector('#sendSignaling').onclick = () => alert('Not yet implemented');
+        document.querySelector('#sendSignaling').onclick = this.sendSignaling.bind(this);
         document.querySelector('#sendDc').onclick = this.sendDc.bind(this);
     }
 
@@ -193,16 +193,30 @@ class TestClient {
         document.querySelector('#' + type + 'State').innerHTML = value;
     }
 
-    sendDc() {
+    sentMsg(text) {
         const input = document.querySelector('#chatText')
         const messages = document.querySelector('textarea')
-        const text = input.value;
-        const bytes = stringToUtf8a(text);
-        console.debug('Sending', bytes.length, 'bytes:', bytes);
-        this.sdc.send(bytes);
         messages.value += '> ' + text + '\n';
         input.value = '';
         messages.scrollTop = messages.scrollHeight;
+    }
+
+    sendSignaling() {
+        const input = document.querySelector('#chatText')
+        const text = input.value;
+        const bytes = stringToUtf8a(text);
+        console.debug('Sending', bytes.length, 'bytes through signaling channel:', bytes);
+        this.client.sendApplicationMessage(bytes.buffer);
+        this.sentMsg(text);
+    }
+
+    sendDc() {
+        const input = document.querySelector('#chatText')
+        const text = input.value;
+        const bytes = stringToUtf8a(text);
+        console.debug('Sending', bytes.length, 'bytes through data channel:', bytes);
+        this.sdc.send(bytes);
+        this.sentMsg(text);
     }
 
 }
