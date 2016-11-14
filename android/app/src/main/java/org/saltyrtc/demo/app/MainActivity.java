@@ -114,6 +114,7 @@ public class MainActivity extends Activity {
 				.connectTo(Config.HOST, Config.PORT, this.getSslContext())
 				.withKeyStore(permanentKey)
 				.withTrustedPeerKey(Config.TRUSTED_KEY)
+				.withPingInterval(30)
 				.usingTasks(new Task[]{this.task})
 				.asResponder();
 
