@@ -33,6 +33,7 @@ import org.saltyrtc.client.events.SignalingStateChangedEvent;
 import org.saltyrtc.client.exceptions.ConnectionException;
 import org.saltyrtc.client.exceptions.InvalidKeyException;
 import org.saltyrtc.client.keystore.KeyStore;
+import org.saltyrtc.client.signaling.CloseCode;
 import org.saltyrtc.client.signaling.state.SignalingState;
 import org.saltyrtc.client.tasks.Task;
 import org.saltyrtc.tasks.webrtc.SecureDataChannel;
@@ -280,6 +281,9 @@ public class MainActivity extends Activity {
 			this.sdc.close();
 			this.sdc.dispose();
 		}
+
+		Log.d(LOG_TAG, "Stopping WebRTC task...");
+		this.task.close(CloseCode.CLOSING_NORMAL);
 
 		Log.d(LOG_TAG, "Stopping SaltyRTC client...");
 		this.client.disconnect();
