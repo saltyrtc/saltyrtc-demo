@@ -8,8 +8,8 @@
 package org.saltyrtc.demo.app;
 
 public class Config {
-	public static String HOST = "saltyrtc.example.org";
-	public static int PORT = 8765;
+	public static String HOST = "server.saltyrtc.org";
+	public static int PORT = 9287;
 
 	public static String STUN_SERVER = "stun.services.mozilla.com";
 	public static String TURN_SERVER = null;

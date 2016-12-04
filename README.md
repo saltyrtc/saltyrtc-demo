@@ -5,6 +5,12 @@ over the signaling channel as well as via WebRTC.
 
 <img src="web/screenshot.png" width="455">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src="android/screenshot.png" width="252">
 
+The default configuration uses a test server instance provided at
+`wss://server.saltyrtc.org:9287`. You can also use your own.
+
+Note that you might need to configure a TURN server if you want to test complex
+network setups that can't be resolved using STUN.
+
 ## Usage
 
 ### Web
