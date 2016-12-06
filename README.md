@@ -15,6 +15,8 @@ network setups that can't be resolved using STUN.
 
 ### Web
 
+Prerequisites: npm version >= 3
+
 Install dependencies:
 
     $ npm install
