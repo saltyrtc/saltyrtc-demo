@@ -18,6 +18,7 @@ import org.webrtc.MediaConstraints;
 import org.webrtc.MediaStream;
 import org.webrtc.PeerConnection;
 import org.webrtc.PeerConnectionFactory;
+import org.webrtc.RtpReceiver;
 import org.webrtc.SdpObserver;
 import org.webrtc.SessionDescription;
 
@@ -225,6 +226,11 @@ class WebRTC {
 		@Override
 		public void onRenegotiationNeeded() {
 			Log.d(LOG_TAG, "Renegotiation needed");
+		}
+
+		@Override
+		public void onAddTrack(RtpReceiver rtpReceiver, MediaStream[] mediaStreams) {
+			Log.d(LOG_TAG, "Add track");
 		}
 	}
 
