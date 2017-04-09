@@ -1,14 +1,15 @@
 {
   "name": "saltyrtc-demo",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "scripts": {},
   "author": "Threema GmbH",
   "license": "MIT",
   "homepage": "https://saltyrtc.org/",
   "dependencies": {
-    "saltyrtc-client": "^0.4.1",
-    "saltyrtc-task-webrtc": "^0.4.0",
+    "@saltyrtc/client": "^0.9.1",
+    "msgpack-lite": "^0.1.26",
+    "saltyrtc-task-webrtc": "^0.9.1",
     "tweetnacl": "^0.14.3",
-    "webrtc-adapter": "^2.0.5"
+    "webrtc-adapter": "^3.3.1"
   }
 }

@@ -22,7 +22,7 @@ const DC_LABEL = 'much-secure';
 class TestClient {
 
     start() {
-        const permanentKey = new saltyrtcClient.KeyStore(PUBLIC_KEY, PRIVATE_KEY);
+        const permanentKey = new saltyrtcClient.KeyStore(PRIVATE_KEY);
         this.task = new saltyrtcTaskWebrtc.WebRTCTask();
         this.client = new saltyrtcClient.SaltyRTCBuilder()
             .connectTo(HOST, PORT)
