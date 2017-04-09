@@ -11,6 +11,9 @@ The default configuration uses a test server instance provided at
 Note that you might need to configure a TURN server if you want to test complex
 network setups that can't be resolved using STUN.
 
+Note also that this demo application only uses hardcoded trusted peer keys. In
+practice, you would want to initialize a session using an auth token.
+
 ## Usage
 
 ### Web
