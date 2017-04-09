@@ -114,9 +114,11 @@ public class MainActivity extends Activity {
 		this.task = new WebRTCTask();
 		this.client = new SaltyRTCBuilder()
 				.connectTo(Config.HOST, Config.PORT, this.getSslContext())
+				.withServerKey(Config.SERVER_KEY)
 				.withKeyStore(permanentKey)
 				.withTrustedPeerKey(Config.TRUSTED_KEY)
 				.withPingInterval(30)
+				.withWebsocketConnectTimeout(15000)
 				.usingTasks(new Task[]{this.task})
 				.asResponder();
 
@@ -413,6 +415,9 @@ public class MainActivity extends Activity {
 		msgBuilder.append("\n\n");
 		msgBuilder.append("Trusted key: ");
 		msgBuilder.append(Config.TRUSTED_KEY);
+		msgBuilder.append("\n\n");
+		msgBuilder.append("Server public key: ");
+		msgBuilder.append(Config.SERVER_KEY);
 		msgBuilder.append("\n\n");
 		builder.setMessage(msgBuilder.toString());
 		builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
