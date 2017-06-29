@@ -145,6 +145,9 @@ class TestClient {
                 messages.value += '< ' + text + '\n';
                 messages.scrollTop = messages.scrollHeight;
             };
+
+            // Enable "Submit via DataChannel" button
+            this.enableDc();
         });
     }
 
@@ -187,6 +190,10 @@ class TestClient {
                 this.task.sendOffer(offer);
             });
         });
+    }
+
+    enableDc() {
+        document.querySelector('#sendDc').disabled = false;
     }
 
     setState(type, value) {
