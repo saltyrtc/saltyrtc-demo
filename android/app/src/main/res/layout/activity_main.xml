@@ -121,6 +121,7 @@
         android:layout_alignParentEnd="true"
         android:visibility="invisible"
         android:onClick="sendDc"
+        android:enabled="false"
         android:text="Send via DC"/>
 
     <EditText

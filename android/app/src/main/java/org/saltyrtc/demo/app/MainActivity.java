@@ -157,6 +157,7 @@ public class MainActivity extends Activity {
 	private EventHandler<HandoverEvent> onHandover = new EventHandler<HandoverEvent>() {
 		@Override
 		public boolean handle(final HandoverEvent event) {
+			MainActivity.this.sendButton.setEnabled(true);
 			return false;
 		}
 	};
