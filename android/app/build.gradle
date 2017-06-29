@@ -32,6 +32,6 @@ dependencies {
     compile('org.saltyrtc.client:saltyrtc-client:0.10.+', {
         exclude group: 'org.json', module: 'json'
     })
-    compile 'org.saltyrtc.tasks.webrtc:saltyrtc-task-webrtc:0.10.+'
+    compile 'org.saltyrtc.tasks.webrtc:saltyrtc-task-webrtc:0.11.+'
     compile 'com.noveogroup.android:android-logger:1.3.1'
 }
