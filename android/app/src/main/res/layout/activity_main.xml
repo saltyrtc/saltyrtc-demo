@@ -111,6 +111,23 @@
                 tools:ignore="HardcodedText"/>
         </LinearLayout>
 
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Handover: "
+                tools:ignore="HardcodedText"/>
+            <TextView
+                android:id="@+id/salty_handover_state"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/loading"
+                tools:ignore="HardcodedText"/>
+        </LinearLayout>
+
     </LinearLayout>
 
     <Button

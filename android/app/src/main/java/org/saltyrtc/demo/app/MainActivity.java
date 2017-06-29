@@ -62,6 +62,7 @@ public class MainActivity extends Activity {
 	private TextView rtcSignalingStateView;
 	private TextView rtcIceConnectionStateView;
 	private TextView rtcIceGatheringStateView;
+	private TextView saltyHandoverStateView;
 	private LinearLayout messagesLayout;
 	private ScrollView messagesScrollView;
 	private EditText textInput;
@@ -82,6 +83,7 @@ public class MainActivity extends Activity {
 		this.rtcSignalingStateView = (TextView) findViewById(R.id.rtc_signaling_state);
 		this.rtcIceConnectionStateView = (TextView) findViewById(R.id.rtc_ice_connection_state);
 		this.rtcIceGatheringStateView = (TextView) findViewById(R.id.rtc_ice_gathering_state);
+		this.saltyHandoverStateView = (TextView) findViewById(R.id.salty_handover_state);
 
 		// Get other views
 		this.messagesLayout = (LinearLayout) findViewById(R.id.messages);
@@ -101,6 +103,7 @@ public class MainActivity extends Activity {
 		this.setState(StateType.RTC_SIGNALING, "Unknown");
 		this.setState(StateType.RTC_ICE_CONNECTION, "Unknown");
 		this.setState(StateType.RTC_ICE_GATHERING, "Unknown");
+		this.setState(StateType.SALTY_HANDOVER, "Unknown");
 	}
 
 	private SSLContext getSslContext() throws NoSuchAlgorithmException {
@@ -157,7 +160,13 @@ public class MainActivity extends Activity {
 	private EventHandler<HandoverEvent> onHandover = new EventHandler<HandoverEvent>() {
 		@Override
 		public boolean handle(final HandoverEvent event) {
-			MainActivity.this.sendButton.setEnabled(true);
+			runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					MainActivity.this.sendButton.setEnabled(true);
+					MainActivity.this.setState(StateType.SALTY_HANDOVER, "YES");
+				}
+			});
 			return false;
 		}
 	};
@@ -268,6 +277,7 @@ public class MainActivity extends Activity {
 			this.startButton.setEnabled(false);
 			this.stopButton.setEnabled(true);
 			this.messagesLayout.removeAllViewsInLayout();
+			this.setState(StateType.SALTY_HANDOVER, "NO");
 		} catch (NoSuchAlgorithmException | InvalidKeyException | ConnectionException e) {
 			e.printStackTrace();
 		}
@@ -325,6 +335,9 @@ public class MainActivity extends Activity {
 						break;
 					case RTC_ICE_GATHERING:
 						MainActivity.this.rtcIceGatheringStateView.setText(state);
+						break;
+					case SALTY_HANDOVER:
+						MainActivity.this.saltyHandoverStateView.setText(state);
 						break;
 				}
 			}
