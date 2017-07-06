@@ -41,10 +41,7 @@ class WebRTC {
 
 		// Initialize Android globals
 		// See https://bugs.chromium.org/p/webrtc/issues/detail?id=3416
-		final boolean ok = PeerConnectionFactory.initializeAndroidGlobals(activity, true, true, false);
-		if (!ok) {
-			throw new RuntimeException("initializeAndroidGlobals failed");
-		}
+		PeerConnectionFactory.initializeAndroidGlobals(activity, false);
 
 		// Set ICE servers
 		List<PeerConnection.IceServer> iceServers = new ArrayList<>();
