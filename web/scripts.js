@@ -154,6 +154,7 @@ class TestClient {
     setupIceCandidateHandling() {
         console.debug('Setting up ICE candidate handling...');
         this.pc.onicecandidate = (e) => {
+            console.debug('New local candidate:', e.candidate.candidate);
             if (e.candidate) {
                 this.task.sendCandidate({
                     candidate: e.candidate.candidate,
@@ -167,6 +168,7 @@ class TestClient {
 
         this.task.on('candidates', (e) => {
             for (let candidateInit of e.data) {
+                console.debug('New remote candidate:', candidateInit.candidate);
                 this.pc.addIceCandidate(candidateInit);
             }
         });
