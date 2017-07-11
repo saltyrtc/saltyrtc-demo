@@ -306,6 +306,9 @@ public class MainActivity extends Activity {
 		this.client.events.signalingConnectionLost.clear();
 		this.client.events.close.clear();
 		this.client = null;
+
+		Log.d(LOG_TAG, "Stopping WebRTC connection...");
+		this.webrtc.dispose();
 		this.webrtc = null;
 
 		this.startButton.setEnabled(true);

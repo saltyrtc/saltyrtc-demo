@@ -33,6 +33,7 @@ class WebRTC {
 	private final PeerConnection pc;
 	private final WebRTCTask task;
 	private final MediaConstraints constraints;
+	private final PeerConnectionFactory factory;
 	private final MainActivity activity;
 
 	WebRTC(WebRTCTask task, MainActivity activity) {
@@ -53,9 +54,9 @@ class WebRTC {
 
 		// Create peer connection
 		final PeerConnectionFactory.Options options = new PeerConnectionFactory.Options();
-		final PeerConnectionFactory factory = new PeerConnectionFactory(options);
-		constraints = new MediaConstraints();
-		this.pc = factory.createPeerConnection(iceServers, constraints, new PeerConnectionObserver());
+		this.factory = new PeerConnectionFactory(options);
+		this.constraints = new MediaConstraints();
+		this.pc = this.factory.createPeerConnection(iceServers, constraints, new PeerConnectionObserver());
 
 		// Add task message event handler
 		this.task.setMessageHandler(new TaskMessageHandler());
@@ -236,6 +237,16 @@ class WebRTC {
 	 */
 	void handover() {
 		this.task.handover(this.pc);
+	}
+
+	/**
+	 * Stop and dispose this connection.
+	 *
+	 * It cannot be reused afterwards.
+	 */
+	void dispose() {
+		this.pc.dispose();
+		this.factory.dispose();
 	}
 
 }
