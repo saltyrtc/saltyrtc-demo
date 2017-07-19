@@ -300,11 +300,7 @@ public class MainActivity extends Activity {
 
 		Log.d(LOG_TAG, "Stopping SaltyRTC client...");
 		this.client.disconnect();
-		this.client.events.signalingStateChanged.clear();
-		this.client.events.handover.clear();
-		this.client.events.applicationData.clear();
-		this.client.events.signalingConnectionLost.clear();
-		this.client.events.close.clear();
+		this.client.events.clearAll();
 		this.client = null;
 
 		Log.d(LOG_TAG, "Stopping WebRTC connection...");
