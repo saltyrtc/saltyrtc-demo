@@ -141,7 +141,7 @@ class WebRTC {
 				try {
 					WebRTC.this.task.sendAnswer(this.sd);
 					Log.d(LOG_TAG, "Sent answer");
-				} catch (ConnectionException e) {
+				} catch (final ConnectionException e) {
 					Log.e(LOG_TAG, "Could not send answer: " + e.getMessage());
 				}
 			}
@@ -157,7 +157,7 @@ class WebRTC {
 	 * One or more ICE candidates were received. Store them.
 	 */
 	private void onIceCandidatesReceived(List<IceCandidate> candidates) {
-		for (IceCandidate candidate : candidates) {
+		for (final IceCandidate candidate : candidates) {
 			this.pc.addIceCandidate(candidate);
 		}
 		Log.d(LOG_TAG, "Added " + candidates.size() + " ICE candidate(s)");
@@ -195,7 +195,7 @@ class WebRTC {
 			Log.d(LOG_TAG, "New ICE candidate");
 			try {
 				WebRTC.this.task.sendCandidates(iceCandidate);
-			} catch (ConnectionException e) {
+			} catch (final ConnectionException e) {
 				Log.e(LOG_TAG, "Could not send ICE candidate: " + e.getMessage());
 			}
 		}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 Threema GmbH
+ * Copyright (c) 2016-2018 Threema GmbH
  *
  * Licensed under the Apache License, Version 2.0, <see LICENSE-APACHE file>
  * or the MIT license <see LICENSE-MIT file>, at your option. This file may not be
@@ -10,7 +10,6 @@ package org.saltyrtc.demo.app;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.TypedValue;
@@ -49,7 +48,7 @@ import javax.net.ssl.SSLContext;
 
 public class MainActivity extends Activity {
 
-	private static String LOG_TAG = MainActivity.class.getName();
+	private static final String LOG_TAG = MainActivity.class.getName();
 
 	private SaltyRTC client;
 	private WebRTCTask task;
@@ -75,21 +74,21 @@ public class MainActivity extends Activity {
 		setContentView(R.layout.activity_main);
 
 		// Get button views
-		this.startButton = (Button) findViewById(R.id.button_start);
-		this.stopButton = (Button) findViewById(R.id.button_stop);
+		this.startButton = findViewById(R.id.button_start);
+		this.stopButton = findViewById(R.id.button_stop);
 
 		// Get state views
-		this.saltySignalingStateView = (TextView) findViewById(R.id.salty_signaling_state);
-		this.rtcSignalingStateView = (TextView) findViewById(R.id.rtc_signaling_state);
-		this.rtcIceConnectionStateView = (TextView) findViewById(R.id.rtc_ice_connection_state);
-		this.rtcIceGatheringStateView = (TextView) findViewById(R.id.rtc_ice_gathering_state);
-		this.saltyHandoverStateView = (TextView) findViewById(R.id.salty_handover_state);
+		this.saltySignalingStateView = findViewById(R.id.salty_signaling_state);
+		this.rtcSignalingStateView = findViewById(R.id.rtc_signaling_state);
+		this.rtcIceConnectionStateView = findViewById(R.id.rtc_ice_connection_state);
+		this.rtcIceGatheringStateView = findViewById(R.id.rtc_ice_gathering_state);
+		this.saltyHandoverStateView = findViewById(R.id.salty_handover_state);
 
 		// Get other views
-		this.messagesLayout = (LinearLayout) findViewById(R.id.messages);
-		this.messagesScrollView = (ScrollView) findViewById(R.id.messagesScroll);
-		this.textInput = (EditText) findViewById(R.id.chat_input);
-		this.sendButton = (Button) findViewById(R.id.send_button);
+		this.messagesLayout = findViewById(R.id.messages);
+		this.messagesScrollView = findViewById(R.id.messagesScroll);
+		this.textInput = findViewById(R.id.chat_input);
+		this.sendButton = findViewById(R.id.send_button);
 
 		// Initialize states
 		this.resetStates();
@@ -136,18 +135,16 @@ public class MainActivity extends Activity {
 	/**
 	 * On signaling state change.
 	 */
-	private EventHandler<SignalingStateChangedEvent> onSignalingStateChanged = new EventHandler<SignalingStateChangedEvent>() {
+	@SuppressWarnings("Convert2Lambda")
+	private final EventHandler<SignalingStateChangedEvent> onSignalingStateChanged = new EventHandler<SignalingStateChangedEvent>() {
 		@Override
 		public boolean handle(final SignalingStateChangedEvent event) {
 			MainActivity.this.setState(StateType.SALTY_SIGNALING, event.getState().name());
 			if (SignalingState.TASK == event.getState()) {
 				MainActivity.this.webrtc.handover();
-				runOnUiThread(new Runnable() {
-					@Override
-					public void run() {
-						MainActivity.this.textInput.setVisibility(View.VISIBLE);
-						MainActivity.this.sendButton.setVisibility(View.VISIBLE);
-					}
+				runOnUiThread(() -> {
+					MainActivity.this.textInput.setVisibility(View.VISIBLE);
+					MainActivity.this.sendButton.setVisibility(View.VISIBLE);
 				});
 			}
 			return false;
@@ -157,15 +154,13 @@ public class MainActivity extends Activity {
 	/**
 	 * On handover.
 	 */
-	private EventHandler<HandoverEvent> onHandover = new EventHandler<HandoverEvent>() {
+	@SuppressWarnings("Convert2Lambda")
+	private final EventHandler<HandoverEvent> onHandover = new EventHandler<HandoverEvent>() {
 		@Override
 		public boolean handle(final HandoverEvent event) {
-			runOnUiThread(new Runnable() {
-				@Override
-				public void run() {
-					MainActivity.this.sendButton.setEnabled(true);
-					MainActivity.this.setState(StateType.SALTY_HANDOVER, "YES");
-				}
+			runOnUiThread(() -> {
+				MainActivity.this.sendButton.setEnabled(true);
+				MainActivity.this.setState(StateType.SALTY_HANDOVER, "YES");
 			});
 			return false;
 		}
@@ -174,7 +169,7 @@ public class MainActivity extends Activity {
 	/**
 	 * On application message.
 	 */
-	private EventHandler<ApplicationDataEvent> onApplicationData = new EventHandler<ApplicationDataEvent>() {
+	private final EventHandler<ApplicationDataEvent> onApplicationData = new EventHandler<ApplicationDataEvent>() {
 		/**
 		 * To avoid string type compatibility problems, we encode data as UTF8 on the
 		 * browser side and decode the string from UTF8 here.
@@ -184,10 +179,10 @@ public class MainActivity extends Activity {
 			final byte[] bytes = (byte[]) event.getData();
 			Log.d(LOG_TAG, "New incoming application message: " + bytes.length + " bytes");
 
-			String message;
+			final String message;
 			try {
 				message = new String(bytes, "UTF-8");
-			} catch (UnsupportedEncodingException e) {
+			} catch (final UnsupportedEncodingException e) {
 				e.printStackTrace();
 				return false;
 			}
@@ -201,15 +196,11 @@ public class MainActivity extends Activity {
 	/**
 	 * On close.
 	 */
-	private EventHandler<CloseEvent> onClose = new EventHandler<CloseEvent>() {
+	@SuppressWarnings("Convert2Lambda")
+	private final EventHandler<CloseEvent> onClose = new EventHandler<CloseEvent>() {
 		@Override
 		public boolean handle(final CloseEvent event) {
-			runOnUiThread(new Runnable() {
-				@Override
-				public void run() {
-					MainActivity.this.stop(null);
-				}
-			});
+			runOnUiThread(() -> MainActivity.this.stop(null));
 			return false;
 		}
 	};
@@ -217,7 +208,8 @@ public class MainActivity extends Activity {
 	/**
 	 * On signaling connection lost.
 	 */
-	private EventHandler<SignalingConnectionLostEvent> onSignalingConnectionLost = new EventHandler<SignalingConnectionLostEvent>() {
+	@SuppressWarnings("Convert2Lambda")
+	private final EventHandler<SignalingConnectionLostEvent> onSignalingConnectionLost = new EventHandler<SignalingConnectionLostEvent>() {
 		@Override
 		public boolean handle(final SignalingConnectionLostEvent event) {
 			return false;
@@ -249,10 +241,10 @@ public class MainActivity extends Activity {
 			public void onMessage(DataChannel.Buffer buffer) {
 				final byte[] bytes = buffer.data.array();
 				Log.d(LOG_TAG, "New incoming datachannel message: " + bytes.length + " bytes");
-				String message;
+				final String message;
 				try {
 					message = new String(bytes, "UTF-8");
-				} catch (UnsupportedEncodingException e) {
+				} catch (final UnsupportedEncodingException e) {
 					e.printStackTrace();
 					return;
 				}
@@ -319,26 +311,23 @@ public class MainActivity extends Activity {
 	 * This method may be called from a background thread.
 	 */
 	public void setState(final StateType type, final String state) {
-		runOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				switch (type) {
-					case SALTY_SIGNALING:
-						MainActivity.this.saltySignalingStateView.setText(state);
-						break;
-					case RTC_SIGNALING:
-						MainActivity.this.rtcSignalingStateView.setText(state);
-						break;
-					case RTC_ICE_CONNECTION:
-						MainActivity.this.rtcIceConnectionStateView.setText(state);
-						break;
-					case RTC_ICE_GATHERING:
-						MainActivity.this.rtcIceGatheringStateView.setText(state);
-						break;
-					case SALTY_HANDOVER:
-						MainActivity.this.saltyHandoverStateView.setText(state);
-						break;
-				}
+		runOnUiThread(() -> {
+			switch (type) {
+				case SALTY_SIGNALING:
+					MainActivity.this.saltySignalingStateView.setText(state);
+					break;
+				case RTC_SIGNALING:
+					MainActivity.this.rtcSignalingStateView.setText(state);
+					break;
+				case RTC_ICE_CONNECTION:
+					MainActivity.this.rtcIceConnectionStateView.setText(state);
+					break;
+				case RTC_ICE_GATHERING:
+					MainActivity.this.rtcIceGatheringStateView.setText(state);
+					break;
+				case SALTY_HANDOVER:
+					MainActivity.this.saltyHandoverStateView.setText(state);
+					break;
 			}
 		});
 
@@ -368,12 +357,7 @@ public class MainActivity extends Activity {
 	 */
 	private void showMessage(final View view) {
 		MainActivity.this.messagesLayout.addView(view);
-		MainActivity.this.messagesScrollView.post(new Runnable() {
-			@Override
-			public void run() {
-				MainActivity.this.messagesScrollView.fullScroll(ScrollView.FOCUS_DOWN);
-			}
-		});
+		MainActivity.this.messagesScrollView.post(() -> MainActivity.this.messagesScrollView.fullScroll(ScrollView.FOCUS_DOWN));
 	}
 
 	/**
@@ -383,12 +367,7 @@ public class MainActivity extends Activity {
 	 */
 	public void onMessage(String message) {
 		final View view = this.getMessageTextView(R.color.colorMessageIn, message);
-		runOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				MainActivity.this.showMessage(view);
-			}
-		});
+		runOnUiThread(() -> MainActivity.this.showMessage(view));
 	}
 
 	/**
@@ -402,12 +381,7 @@ public class MainActivity extends Activity {
 		final ByteBuffer bytes = StandardCharsets.UTF_8.encode(text);
 		this.sdc.send(new DataChannel.Buffer(bytes, true));
 		final View msgView = this.getMessageTextView(R.color.colorMessageOut, text);
-		runOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				MainActivity.this.showMessage(msgView);
-			}
-		});
+		runOnUiThread(() -> MainActivity.this.showMessage(msgView));
 		this.textInput.setText("");
 	}
 
@@ -416,29 +390,23 @@ public class MainActivity extends Activity {
 	 * Show key info.
 	 */
 	public void showKeyInfo(View view) {
-		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		final AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setCancelable(true);
 		builder.setTitle("Key Info");
-		StringBuilder msgBuilder = new StringBuilder();
-		msgBuilder.append("Public key: ");
-		msgBuilder.append(Config.PUBLIC_KEY);
-		msgBuilder.append("\n\n");
-		msgBuilder.append("Private key: ");
-		msgBuilder.append(Config.PRIVATE_KEY);
-		msgBuilder.append("\n\n");
-		msgBuilder.append("Trusted key: ");
-		msgBuilder.append(Config.TRUSTED_KEY);
-		msgBuilder.append("\n\n");
-		msgBuilder.append("Server public key: ");
-		msgBuilder.append(Config.SERVER_KEY);
-		msgBuilder.append("\n\n");
-		builder.setMessage(msgBuilder.toString());
-		builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialogInterface, int i) {
-				dialogInterface.dismiss();
-			}
-		});
+		final String msg = "Public key: " +
+				Config.PUBLIC_KEY +
+				"\n\n" +
+				"Private key: " +
+				Config.PRIVATE_KEY +
+				"\n\n" +
+				"Trusted key: " +
+				Config.TRUSTED_KEY +
+				"\n\n" +
+				"Server public key: " +
+				Config.SERVER_KEY +
+				"\n\n";
+		builder.setMessage(msg);
+		builder.setPositiveButton("OK", (dialogInterface, i) -> dialogInterface.dismiss());
 		builder.create().show();
 	}
 
