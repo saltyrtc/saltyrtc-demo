@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 Threema GmbH
+ * Copyright (c) 2016-2018 Threema GmbH
  *
  * Licensed under the Apache License, Version 2.0, <see LICENSE-APACHE file>
  * or the MIT license <see LICENSE-MIT file>, at your option. This file may not be
@@ -41,22 +41,31 @@ class WebRTC {
 		this.activity = activity;
 
 		// Initialize Android globals
-		// See https://bugs.chromium.org/p/webrtc/issues/detail?id=3416
-		PeerConnectionFactory.initializeAndroidGlobals(activity, false);
+		PeerConnectionFactory.initialize(
+				PeerConnectionFactory.InitializationOptions.builder(activity)
+				.setEnableInternalTracer(BuildConfig.DEBUG)
+				.createInitializationOptions()
+		);
 
 		// Set ICE servers
-		List<PeerConnection.IceServer> iceServers = new ArrayList<>();
-		iceServers.add(new org.webrtc.PeerConnection.IceServer("stun:" + Config.STUN_SERVER));
+		final List<PeerConnection.IceServer> iceServers = new ArrayList<>();
+		iceServers.add(
+			PeerConnection.IceServer.builder("stun:" + Config.STUN_SERVER).createIceServer()
+		);
 		if (Config.TURN_SERVER != null) {
-			iceServers.add(new org.webrtc.PeerConnection.IceServer("turn:" + Config.TURN_SERVER,
-					Config.TURN_USER, Config.TURN_PASS));
+			iceServers.add(
+				PeerConnection.IceServer.builder("turn:" + Config.TURN_SERVER)
+						.setUsername(Config.TURN_USER)
+						.setPassword(Config.TURN_PASS)
+						.createIceServer()
+			);
 		}
 
 		// Create peer connection
 		final PeerConnectionFactory.Options options = new PeerConnectionFactory.Options();
 		this.factory = new PeerConnectionFactory(options);
 		this.constraints = new MediaConstraints();
-		this.pc = this.factory.createPeerConnection(iceServers, constraints, new PeerConnectionObserver());
+		this.pc = this.factory.createPeerConnection(iceServers, new PeerConnectionObserver());
 
 		// Add task message event handler
 		this.task.setMessageHandler(new TaskMessageHandler());
