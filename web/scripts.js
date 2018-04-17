@@ -38,6 +38,7 @@ class TestClient {
 
         document.querySelector('#sendSignaling').onclick = this.sendSignaling.bind(this);
         document.querySelector('#sendDc').onclick = this.sendDc.bind(this);
+        document.querySelector('#sendData').onclick = this.sendData.bind(this);
     }
 
     onStateChange(newState) {
@@ -181,6 +182,7 @@ class TestClient {
     initiatorFlow() {
         // Register answer handler
         this.task.once('answer', (answer) => {
+            console.warn('Answer', answer);
             console.debug('Set remote description');
             this.pc.setRemoteDescription(answer.data).then(() => {
                 console.info('WebRTC initialization done.');
@@ -190,6 +192,7 @@ class TestClient {
         // Create offer
         console.debug('Create offer');
         this.pc.createOffer().then((offer) => {
+            console.warn('Offer', offer);
             console.debug('Set local description');
             this.pc.setLocalDescription(offer).then(() => {
                 console.debug('Send offer to peer');
@@ -230,6 +233,15 @@ class TestClient {
         console.debug('Sending', bytes.length, 'bytes through data channel:', bytes);
         this.sdc.send(bytes);
         this.sentMsg(text);
+    }
+
+    sendData() {
+        const data = new Uint8Array(600 * 1024);
+        for (let i = 0; i < 600; i++) {
+            data[i] = Math.random() * 250;
+        }
+        this.sdc.send(data);
+        this.sentMsg("[sent 600 KiB random data]");
     }
 
 }
