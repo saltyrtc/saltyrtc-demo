@@ -178,17 +178,14 @@ public class MainActivity extends Activity {
 		public boolean handle(ApplicationDataEvent event) {
 			final byte[] bytes = (byte[]) event.getData();
 			Log.d(LOG_TAG, "New incoming application message: " + bytes.length + " bytes");
-
-			final String message;
 			try {
-				message = new String(bytes, "UTF-8");
+				final String message = msgBytesToString(bytes);
+				Log.d(LOG_TAG, "Message is: " + message);
+				MainActivity.this.onMessage(message);
 			} catch (final UnsupportedEncodingException e) {
 				e.printStackTrace();
 				return false;
 			}
-
-			Log.d(LOG_TAG, "Message is: " + message);
-			MainActivity.this.onMessage(message);
 			return false;
 		}
 	};
@@ -216,6 +213,14 @@ public class MainActivity extends Activity {
 		}
 	};
 
+	private static String msgBytesToString(byte[] bytes) throws UnsupportedEncodingException {
+		if (bytes.length < 255) {
+			return new String(bytes, "UTF-8");
+		} else {
+			return "[Large message, " + bytes.length + " bytes]";
+		}
+	}
+
 	/**
 	 * A new secure data channel was created.
 	 */
@@ -241,15 +246,13 @@ public class MainActivity extends Activity {
 			public void onMessage(DataChannel.Buffer buffer) {
 				final byte[] bytes = buffer.data.array();
 				Log.d(LOG_TAG, "New incoming datachannel message: " + bytes.length + " bytes");
-				final String message;
 				try {
-					message = new String(bytes, "UTF-8");
+					final String message = msgBytesToString(bytes);
+					Log.d(LOG_TAG, "Message is: " + message);
+					MainActivity.this.onMessage(message);
 				} catch (final UnsupportedEncodingException e) {
 					e.printStackTrace();
-					return;
 				}
-				Log.d(LOG_TAG, "Message is: " + message);
-				MainActivity.this.onMessage(message);
 			}
 		});
 		this.sdc = sdc;
