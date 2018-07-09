@@ -11,7 +11,7 @@ public class Config {
 	public static String HOST = "server.saltyrtc.org";
 	public static int PORT = 9287;
 
-	public static String STUN_SERVER = "stun.services.mozilla.com";
+	public static String STUN_SERVER = "stun.l.google.com:19302";
 	public static String TURN_SERVER = null;
 	public static String TURN_USER = null;
 	public static String TURN_PASS = null;
