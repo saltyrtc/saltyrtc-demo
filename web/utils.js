@@ -7,7 +7,7 @@
  */
 
 function ready(fn) {
-    if (document.readyState != 'loading'){
+    if (document.readyState !== 'loading'){
         fn();
     } else {
         document.addEventListener('DOMContentLoaded', fn);
@@ -34,7 +34,7 @@ function ready(fn) {
  * https://github.com/google/closure-library/commit/e877b1eac410c0d842bcda118689759512e0e26f
  *
  * @param {string} str 16-bit unicode string.
- * @return {!Array<number>} UTF-8 byte array.
+ * @return {Uint8Array} UTF-8 byte array.
  */
 function stringToUtf8a(str) {
     let out = [], p = 0;
@@ -46,8 +46,8 @@ function stringToUtf8a(str) {
             out[p++] = (c >> 6) | 192;
             out[p++] = (c & 63) | 128;
         } else if (
-            ((c & 0xFC00) == 0xD800) && (i + 1) < str.length &&
-            ((str.charCodeAt(i + 1) & 0xFC00) == 0xDC00)) {
+            ((c & 0xFC00) === 0xD800) && (i + 1) < str.length &&
+            ((str.charCodeAt(i + 1) & 0xFC00) === 0xDC00)) {
                 // Surrogate Pair
                 c = 0x10000 + ((c & 0x03FF) << 10) + (str.charCodeAt(++i) & 0x03FF);
                 out[p++] = (c >> 18) | 240;
@@ -61,7 +61,7 @@ function stringToUtf8a(str) {
             }
     }
     return Uint8Array.from(out);
-};
+}
 
 
 /**
@@ -110,4 +110,4 @@ function utf8aToString(bytes) {
         }
     }
     return out.join('');
-};
+}

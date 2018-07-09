@@ -1,3 +1,4 @@
+// noinspection JSUnusedGlobalSymbols
 /**
  * Copyright (c) 2016-2017 Threema GmbH
  *
@@ -44,7 +45,7 @@ class TestClient {
     onStateChange(newState) {
         console.debug('New state:', newState);
         this.setState('saltySignaling', newState.data);
-        if (newState.data == 'task') {
+        if (newState.data === 'task') {
             const messages = document.querySelector('#messages');
             messages.classList.remove('disabled');
             const loading = document.querySelector('#loading');
@@ -65,10 +66,10 @@ class TestClient {
         console.debug('Initialize WebRTC connection...');
 
         // Create RTC peer connection
-        let iceServers = [{urls: ['stun:' + STUN_SERVER]}];
+        const iceServers = [{urls: [`stun:${STUN_SERVER}`]}];
         if (TURN_SERVER !== null) {
             iceServers.push({
-                urls: ['turn:' + TURN_SERVER],
+                urls: [`turn:${TURN_SERVER}`],
                 username: TURN_USER,
                 credential: TURN_PASS,
                 credentialType: 'password',
@@ -77,13 +78,15 @@ class TestClient {
         this.pc = new RTCPeerConnection({iceServers: iceServers});
 
         // Let the "negotiationneeded" event trigger offer generation
-        this.pc.onnegotiationneeded = (e) => {
+        this.pc.onnegotiationneeded = () => {
             console.debug('Negotiation needed...');
-            this.initiatorFlow();
+            this.initiatorFlow().catch((e) => {
+                console.error('Unable to send error:', e);
+            });
         };
 
         // Handle state changes
-        this.pc.onsignalingstatechange = (e) => {
+        this.pc.onsignalingstatechange = () => {
             console.debug('RTC signaling state change:', this.pc.signalingState);
             this.setState('rtcSignaling', this.pc.signalingState);
         };
@@ -91,15 +94,15 @@ class TestClient {
             console.debug('RTC connection state change:', e); // TODO: Does `e` contain the information?
             this.setState('rtcConnection', this.pc.connectionState);
         };
-        this.pc.oniceconnectionstatechange = (e) => {
+        this.pc.oniceconnectionstatechange = () => {
             console.debug('ICE connection state change:', this.pc.iceConnectionState);
             this.setState('iceConnection', this.pc.iceConnectionState);
         };
-        this.pc.onicegatheringstatechange = (e) => {
+        this.pc.onicegatheringstatechange = () => {
             // TODO: This doesn't currently seem to be called by Chromium / Firefox
             console.debug('ICE gathering state change:', this.pc.iceGatheringState);
             this.setState('iceGathering', this.pc.iceGatheringState);
-        }
+        };
 
         // Set up ICE candidate handling
         this.setupIceCandidateHandling();
@@ -107,7 +110,7 @@ class TestClient {
         // Log incoming data channels
         this.pc.ondatachannel = (e) => {
             console.debug('New data channel was created:', e.channel.label);
-        }
+        };
 
         // Request handover
         this.task.handover(this.pc);
@@ -138,12 +141,12 @@ class TestClient {
                 this.setState('dataChannel', this.sdc.readyState);
             };
             this.sdc.onmessage = (ev) => {
-                const messages = document.querySelector('textarea')
+                const messages = document.querySelector('textarea');
                 const bytes = new Uint8Array(ev.data);
                 const text = utf8aToString(bytes);
                 console.log(text);
                 console.debug('New incoming message:', bytes.length, 'bytes');
-                messages.value += '< ' + text + '\n';
+                messages.value += `< ${text}\n`;
                 messages.scrollTop = messages.scrollHeight;
             };
 
@@ -168,37 +171,37 @@ class TestClient {
                 });
             }
             this.setState('iceGathering', this.pc.iceGatheringState);
-        }
+        };
         this.pc.onicecandidateerror = (e) => console.error('ICE candidate error:', e);
 
         this.task.on('candidates', (e) => {
-            for (let candidateInit of e.data) {
+            for (const candidateInit of e.data) {
                 console.debug('New remote candidate:', candidateInit.candidate);
-                this.pc.addIceCandidate(candidateInit);
+                this.pc.addIceCandidate(candidateInit).catch((e) => {
+                    console.error('Unable to add ICE candidate:', e);
+                });
             }
         });
     }
 
-    initiatorFlow() {
+    async initiatorFlow() {
         // Register answer handler
-        this.task.once('answer', (answer) => {
+        this.task.once('answer', async (answer) => {
             console.warn('Answer', answer);
             console.debug('Set remote description');
-            this.pc.setRemoteDescription(answer.data).then(() => {
-                console.info('WebRTC initialization done.');
-            });
+            await this.pc.setRemoteDescription(answer.data);
+            console.info('WebRTC initialization done.');
         });
 
         // Create offer
         console.debug('Create offer');
-        this.pc.createOffer().then((offer) => {
-            console.warn('Offer', offer);
-            console.debug('Set local description');
-            this.pc.setLocalDescription(offer).then(() => {
-                console.debug('Send offer to peer');
-                this.task.sendOffer(offer);
-            });
-        });
+        const offer = await this.pc.createOffer();
+        console.warn('Offer', offer);
+        console.debug('Set local description');
+        await this.pc.setLocalDescription(offer);
+        console.debug('Send offer to peer');
+        // noinspection JSCheckFunctionSignatures
+        this.task.sendOffer(offer);
     }
 
     enableDc() {
@@ -206,19 +209,20 @@ class TestClient {
     }
 
     setState(type, value) {
-        document.querySelector('#' + type + 'State').innerHTML = value;
+        document.querySelector(`#${type}State`).innerHTML = value;
     }
 
     sentMsg(text) {
-        const input = document.querySelector('#chatText')
-        const messages = document.querySelector('textarea')
-        messages.value += '> ' + text + '\n';
+        const input = document.querySelector('#chatText');
+        const messages = document.querySelector('textarea');
+        messages.value += `> ${text}\n`;
+        // noinspection JSUndefinedPropertyAssignment
         input.value = '';
         messages.scrollTop = messages.scrollHeight;
     }
 
     sendSignaling() {
-        const input = document.querySelector('#chatText')
+        const input = document.querySelector('#chatText');
         const text = input.value;
         const bytes = stringToUtf8a(text);
         console.debug('Sending', bytes.length, 'bytes through signaling channel:', bytes);
@@ -227,7 +231,7 @@ class TestClient {
     }
 
     sendDc() {
-        const input = document.querySelector('#chatText')
+        const input = document.querySelector('#chatText');
         const text = input.value;
         const bytes = stringToUtf8a(text);
         console.debug('Sending', bytes.length, 'bytes through data channel:', bytes);
@@ -254,5 +258,4 @@ ready(() => {
     window.client = testClient;
 
     testClient.start();
-
 });
