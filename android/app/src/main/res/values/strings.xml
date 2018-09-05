@@ -3,4 +3,7 @@
     <string name="loading">Loading...</string>
     <string name="button_start">Start</string>
     <string name="button_stop">Stop</string>
+    <string name="benchmarks">Benchmarks</string>
+    <string name="benchmarks_text">This benchmark will run some encrypt/decrypt operations and measure the time it takes to do so.</string>
+    <string name="button_run_benchmarks">Run benchmarks</string>
 </resources>
