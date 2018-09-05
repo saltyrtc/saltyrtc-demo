@@ -11,6 +11,8 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.os.Bundle;
+import android.support.annotation.AnyThread;
+import android.support.annotation.UiThread;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
@@ -260,9 +262,8 @@ public class MainActivity extends Activity {
 
 	/**
 	 * Start SaltyRTC client.
-	 *
-	 * Must be run on UI thread.
 	 */
+	@UiThread
 	public void start(View view) {
 		Log.d(LOG_TAG, "Starting SaltyRTC client...");
 		try {
@@ -280,9 +281,8 @@ public class MainActivity extends Activity {
 
 	/**
 	 * Stop SaltyRTC client.
-	 *
-	 * Must be run on UI thread.
 	 */
+	@UiThread
 	public synchronized void stop(View view) {
 		if (this.sdc != null) {
 			Log.d(LOG_TAG, "Closing secure data channel...");
@@ -355,9 +355,8 @@ public class MainActivity extends Activity {
 
 	/**
 	 * Show message and scroll to bottom.
-	 *
-	 * Must be run on UI thread.
 	 */
+	@UiThread
 	private void showMessage(final View view) {
 		MainActivity.this.messagesLayout.addView(view);
 		MainActivity.this.messagesScrollView.post(() -> MainActivity.this.messagesScrollView.fullScroll(ScrollView.FOCUS_DOWN));
@@ -365,9 +364,8 @@ public class MainActivity extends Activity {
 
 	/**
 	 * Handle incoming message.
-	 *
-	 * This method may be called from a background thread.
 	 */
+	@AnyThread
 	public void onMessage(String message) {
 		final View view = this.getMessageTextView(R.color.colorMessageIn, message);
 		runOnUiThread(() -> MainActivity.this.showMessage(view));
@@ -375,9 +373,8 @@ public class MainActivity extends Activity {
 
 	/**
 	 * Send message via DC.
-	 *
-	 * Must be run on UI thread.
 	 */
+	@UiThread
 	public void sendDc(View view) {
 		Log.d(LOG_TAG, "Sending message...");
 		final String text = this.textInput.getText().toString();
