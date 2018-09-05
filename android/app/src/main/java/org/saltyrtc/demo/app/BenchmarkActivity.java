@@ -29,6 +29,7 @@ import android.widget.TextView;
 import org.saltyrtc.client.exceptions.CryptoFailedException;
 import org.saltyrtc.client.exceptions.InvalidKeyException;
 import org.saltyrtc.client.keystore.KeyStore;
+import org.saltyrtc.client.keystore.SharedKeyStore;
 import org.saltyrtc.vendor.com.neilalexander.jnacl.NaCl;
 
 import java.util.Random;
@@ -124,8 +125,14 @@ public class BenchmarkActivity extends Activity {
 				try {
 					runOnUiThread(() -> showMessage("Starting benchmark 1...", R.color.colorMessageIn));
 					if (!isCancelled()) { benchmark1EncryptKeyStore(1, 64); }
-					if (!isCancelled()) { benchmark1EncryptKeyStore(1, 1024 * 10); }
-					if (!isCancelled()) { benchmark1EncryptKeyStore(10, 1024); }
+					if (!isCancelled()) { benchmark1EncryptKeyStore(1, 1024 * 20); }
+					if (!isCancelled()) { benchmark1EncryptKeyStore(20, 1024); }
+					if (!isCancelled()) { benchmark1EncryptKeyStore(320, 64); }
+					runOnUiThread(() -> showMessage("Starting benchmark 2...", R.color.colorMessageIn));
+					if (!isCancelled()) { benchmark2EncryptKeyStore(1, 64); }
+					if (!isCancelled()) { benchmark2EncryptKeyStore(1, 1024 * 20); }
+					if (!isCancelled()) { benchmark2EncryptKeyStore(20, 1024); }
+					if (!isCancelled()) { benchmark2EncryptKeyStore(320, 64); }
 				} catch (CryptoFailedException | InvalidKeyException e) {
 					Log.e(LOG_TAG, "Crypto error", e);
 					e.printStackTrace();
@@ -153,7 +160,7 @@ public class BenchmarkActivity extends Activity {
 	}
 
 	/**
-	 * Encrypt the specified number of megabytes of random data using the classic `KeyStore`.
+	 * Encrypt the specified number of kilobytes of random data using the classic `KeyStore`.
 	 */
 	@AnyThread
 	private void benchmark1EncryptKeyStore(int count, int kilobytes) throws CryptoFailedException, InvalidKeyException {
@@ -170,6 +177,9 @@ public class BenchmarkActivity extends Activity {
 		// Create keystore
 		final KeyStore keyStore = new KeyStore();
 
+		// Warmup caches?
+		keyStore.encrypt(plaintext, nonce, otherKey);
+
 		// Encrypt
 		final long t1 = System.nanoTime();
 		for (int i = 0; i < count; i++) {
@@ -184,6 +194,45 @@ public class BenchmarkActivity extends Activity {
 				"--> Encrypting " + count + "x" + kilobytes + " KiB took " + ((t2 - t1) / 1000 / 1000) + " ms",
 				R.color.colorMessageOut
 			)
+		);
+	}
+
+	/**
+	 * Encrypt the specified number of kilobytes of random data using the `SharedKeyStore`.
+	 */
+	@AnyThread
+	private void benchmark2EncryptKeyStore(int count, int kilobytes) throws CryptoFailedException, InvalidKeyException {
+		Log.d(LOG_TAG, "Benchmark 2: Start: Encrypt " + count + "x" + kilobytes + " KiB");
+
+		// Gerate random plaintext
+		final byte[] plaintext = new byte[1024 * kilobytes];
+		final byte[] nonce = new byte[NaCl.NONCEBYTES];
+		final byte[] otherKey = new byte[NaCl.PUBLICKEYBYTES];
+		this.random.nextBytes(plaintext);
+		this.random.nextBytes(nonce);
+		this.random.nextBytes(otherKey);
+
+		// Create keystore
+		final KeyStore keyStore = new KeyStore();
+
+		// Warmup caches?
+		keyStore.encrypt(plaintext, nonce, otherKey);
+
+		// Encrypt
+		final long t1 = System.nanoTime();
+		final SharedKeyStore sharedKeyStore = keyStore.getSharedKeyStore(otherKey);
+		for (int i = 0; i < count; i++) {
+			sharedKeyStore.encrypt(plaintext, nonce);
+		}
+		final long t2 = System.nanoTime();
+
+		Log.d(LOG_TAG, "Benchmark 2: End: Encrypted " + count + "x" + kilobytes + " KiB");
+
+		runOnUiThread(
+				() -> showMessage(
+						"--> Encrypting " + count + "x" + kilobytes + " KiB took " + ((t2 - t1) / 1000 / 1000) + " ms",
+						R.color.colorMessageOut
+				)
 		);
 	}
 }
