@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 Threema GmbH
+ * Copyright (c) 2016-2019 Threema GmbH
  *
  * Licensed under the Apache License, Version 2.0, <see LICENSE-APACHE file>
  * or the MIT license <see LICENSE-MIT file>, at your option. This file may not be
@@ -114,7 +114,7 @@ public class MainActivity extends Activity {
 	private void init() throws NoSuchAlgorithmException, InvalidKeyException {
 		this.resetStates();
 
-		final KeyStore permanentKey = new KeyStore(Config.PUBLIC_KEY, Config.PRIVATE_KEY);
+		final KeyStore permanentKey = new KeyStore(Config.PRIVATE_KEY);
 		this.task = new WebRTCTask();
 		this.client = new SaltyRTCBuilder()
 				.connectTo(Config.HOST, Config.PORT, this.getSslContext())
@@ -394,7 +394,7 @@ public class MainActivity extends Activity {
 		builder.setCancelable(true);
 		builder.setTitle("Key Info");
 		final String msg = "Public key: " +
-				Config.PUBLIC_KEY +
+				new KeyStore(Config.PRIVATE_KEY).getPublicKeyHex() +
 				"\n\n" +
 				"Private key: " +
 				Config.PRIVATE_KEY +
