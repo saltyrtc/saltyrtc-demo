@@ -9,7 +9,7 @@ package org.saltyrtc.demo.app;
 
 public class Config {
 	public static String HOST = "server.saltyrtc.org";
-	public static int PORT = 9287;
+	public static int PORT = 443;
 
 	public static String STUN_SERVER = "stun.l.google.com:19302";
 	public static String TURN_SERVER = null;
