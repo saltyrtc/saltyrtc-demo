@@ -10,11 +10,16 @@ package org.saltyrtc.demo.app;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.AnyThread;
+import android.support.annotation.ColorRes;
 import android.support.annotation.UiThread;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -50,7 +55,7 @@ import javax.net.ssl.SSLContext;
 
 public class MainActivity extends Activity {
 
-	private static final String LOG_TAG = MainActivity.class.getName();
+	private static final String LOG_TAG = MainActivity.class.getSimpleName();
 
 	private SaltyRTC client;
 	private WebRTCTask task;
@@ -94,6 +99,26 @@ public class MainActivity extends Activity {
 
 		// Initialize states
 		this.resetStates();
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.main_menu, menu);
+		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// Handle item selection
+		switch (item.getItemId()) {
+			case R.id.benchmarks:
+				final Intent intent = new Intent(this, BenchmarkActivity.class);
+				this.startActivity(intent);
+				return true;
+			default:
+				return super.onOptionsItemSelected(item);
+		}
 	}
 
 	/**
@@ -336,7 +361,7 @@ public class MainActivity extends Activity {
 
 	}
 
-	private TextView getMessageTextView(int colorResource, String text) {
+	private TextView getMessageTextView(@ColorRes int colorResource, String text) {
 		// Create text view
 		final TextView view = new TextView(this);
 		view.setText(text);
