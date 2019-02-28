@@ -219,7 +219,7 @@ public class MainActivity extends Activity {
 		if (bytes.length < 255) {
 			return new String(bytes, "UTF-8");
 		} else {
-			return "[Large message, " + bytes.length + " bytes]";
+			return "[" + bytes.length / 1024 + " KiB binary data]";
 		}
 	}
 
