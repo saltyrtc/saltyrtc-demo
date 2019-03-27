@@ -25,6 +25,8 @@ import android.widget.TextView;
 
 import org.saltyrtc.client.SaltyRTC;
 import org.saltyrtc.client.SaltyRTCBuilder;
+import org.saltyrtc.client.crypto.CryptoException;
+import org.saltyrtc.client.crypto.CryptoProvider;
 import org.saltyrtc.client.events.ApplicationDataEvent;
 import org.saltyrtc.client.events.CloseEvent;
 import org.saltyrtc.client.events.EventHandler;
@@ -37,11 +39,11 @@ import org.saltyrtc.client.keystore.KeyStore;
 import org.saltyrtc.client.signaling.CloseCode;
 import org.saltyrtc.client.signaling.state.SignalingState;
 import org.saltyrtc.client.tasks.Task;
+import org.saltyrtc.demo.app.utils.LazysodiumCryptoProvider;
 import org.saltyrtc.tasks.webrtc.SecureDataChannel;
 import org.saltyrtc.tasks.webrtc.WebRTCTask;
 import org.webrtc.DataChannel;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
@@ -49,8 +51,8 @@ import java.security.NoSuchAlgorithmException;
 import javax.net.ssl.SSLContext;
 
 public class MainActivity extends Activity {
-
 	private static final String LOG_TAG = MainActivity.class.getName();
+	private static final CryptoProvider cryptoProvider = new LazysodiumCryptoProvider();
 
 	private SaltyRTC client;
 	private WebRTCTask task;
@@ -111,19 +113,19 @@ public class MainActivity extends Activity {
 		return SSLContext.getDefault();
 	}
 
-	private void init() throws NoSuchAlgorithmException, InvalidKeyException {
+	private void init() throws NoSuchAlgorithmException, InvalidKeyException, CryptoException {
 		this.resetStates();
 
-		final KeyStore permanentKey = new KeyStore(Config.PRIVATE_KEY);
+		// Create SaltyRTC instances
 		this.task = new WebRTCTask();
-		this.client = new SaltyRTCBuilder()
+		this.client = new SaltyRTCBuilder(cryptoProvider)
 				.connectTo(Config.HOST, Config.PORT, this.getSslContext())
 				.withServerKey(Config.SERVER_KEY)
-				.withKeyStore(permanentKey)
+				.withKeyStore(new KeyStore(cryptoProvider, Config.PRIVATE_KEY))
 				.withTrustedPeerKey(Config.TRUSTED_KEY)
 				.withPingInterval(30)
 				.withWebsocketConnectTimeout(15000)
-				.usingTasks(new Task[]{this.task})
+				.usingTasks(new Task[] { this.task })
 				.asResponder();
 
 		// On signaling
@@ -180,14 +182,9 @@ public class MainActivity extends Activity {
 		public boolean handle(ApplicationDataEvent event) {
 			final byte[] bytes = (byte[]) event.getData();
 			Log.d(LOG_TAG, "New incoming application message: " + bytes.length + " bytes");
-			try {
-				final String message = msgBytesToString(bytes);
-				Log.d(LOG_TAG, "Message is: " + message);
-				MainActivity.this.onMessage(message);
-			} catch (final UnsupportedEncodingException e) {
-				e.printStackTrace();
-				return false;
-			}
+            final String message = msgBytesToString(bytes);
+            Log.d(LOG_TAG, "Message is: " + message);
+            MainActivity.this.onMessage(message);
 			return false;
 		}
 	};
@@ -215,9 +212,9 @@ public class MainActivity extends Activity {
 		}
 	};
 
-	private static String msgBytesToString(byte[] bytes) throws UnsupportedEncodingException {
+	private static String msgBytesToString(byte[] bytes) {
 		if (bytes.length < 255) {
-			return new String(bytes, "UTF-8");
+			return new String(bytes, StandardCharsets.UTF_8);
 		} else {
 			return "[" + bytes.length / 1024 + " KiB binary data]";
 		}
@@ -248,13 +245,9 @@ public class MainActivity extends Activity {
 			public void onMessage(DataChannel.Buffer buffer) {
 				final byte[] bytes = buffer.data.array();
 				Log.d(LOG_TAG, "New incoming datachannel message: " + bytes.length + " bytes");
-				try {
-					final String message = msgBytesToString(bytes);
-					Log.d(LOG_TAG, "Message is: " + message);
-					MainActivity.this.onMessage(message);
-				} catch (final UnsupportedEncodingException e) {
-					e.printStackTrace();
-				}
+                final String message = msgBytesToString(bytes);
+                Log.d(LOG_TAG, "Message is: " + message);
+                MainActivity.this.onMessage(message);
 			}
 		});
 		this.sdc = sdc;
@@ -274,7 +267,7 @@ public class MainActivity extends Activity {
 			this.stopButton.setEnabled(true);
 			this.messagesLayout.removeAllViewsInLayout();
 			this.setState(StateType.SALTY_HANDOVER, "NO");
-		} catch (NoSuchAlgorithmException | InvalidKeyException | ConnectionException e) {
+		} catch (NoSuchAlgorithmException | InvalidKeyException | ConnectionException | CryptoException e) {
 			e.printStackTrace();
 		}
 	}
@@ -389,12 +382,12 @@ public class MainActivity extends Activity {
 	/**
 	 * Show key info.
 	 */
-	public void showKeyInfo(View view) {
+	public void showKeyInfo(View view) throws CryptoException {
 		final AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setCancelable(true);
 		builder.setTitle("Key Info");
 		final String msg = "Public key: " +
-				new KeyStore(Config.PRIVATE_KEY).getPublicKeyHex() +
+				new KeyStore(cryptoProvider, Config.PRIVATE_KEY).getPublicKeyHex() +
 				"\n\n" +
 				"Private key: " +
 				Config.PRIVATE_KEY +
@@ -409,5 +402,4 @@ public class MainActivity extends Activity {
 		builder.setPositiveButton("OK", (dialogInterface, i) -> dialogInterface.dismiss());
 		builder.create().show();
 	}
-
 }

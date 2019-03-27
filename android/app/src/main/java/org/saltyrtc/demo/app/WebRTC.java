@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 class WebRTC {
-
 	private static final String LOG_TAG = WebRTC.class.getName();
 	private static final String DC_LABEL = "much-secure";
 
@@ -62,8 +61,8 @@ class WebRTC {
 		}
 
 		// Create peer connection
-		final PeerConnectionFactory.Options options = new PeerConnectionFactory.Options();
-		this.factory = new PeerConnectionFactory(options);
+		this.factory = PeerConnectionFactory.builder()
+				.createPeerConnectionFactory();
 		this.constraints = new MediaConstraints();
 		this.pc = this.factory.createPeerConnection(iceServers, new PeerConnectionObserver());
 
@@ -257,5 +256,4 @@ class WebRTC {
 		this.pc.dispose();
 		this.factory.dispose();
 	}
-
 }
