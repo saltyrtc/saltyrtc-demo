@@ -10,8 +10,12 @@ package org.saltyrtc.demo.app;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.AnyThread;
+import android.support.annotation.MainThread;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.util.Log;
 import android.util.TypedValue;
@@ -23,6 +27,8 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import org.saltyrtc.chunkedDc.Chunker;
+import org.saltyrtc.chunkedDc.Unchunker;
 import org.saltyrtc.client.SaltyRTC;
 import org.saltyrtc.client.SaltyRTCBuilder;
 import org.saltyrtc.client.crypto.CryptoException;
@@ -35,46 +41,64 @@ import org.saltyrtc.client.events.SignalingConnectionLostEvent;
 import org.saltyrtc.client.events.SignalingStateChangedEvent;
 import org.saltyrtc.client.exceptions.ConnectionException;
 import org.saltyrtc.client.exceptions.InvalidKeyException;
+import org.saltyrtc.client.exceptions.OverflowException;
+import org.saltyrtc.client.exceptions.ProtocolException;
+import org.saltyrtc.client.exceptions.ValidationError;
+import org.saltyrtc.client.keystore.Box;
 import org.saltyrtc.client.keystore.KeyStore;
 import org.saltyrtc.client.signaling.CloseCode;
 import org.saltyrtc.client.signaling.state.SignalingState;
 import org.saltyrtc.client.tasks.Task;
 import org.saltyrtc.demo.app.utils.LazysodiumCryptoProvider;
-import org.saltyrtc.demo.app.webrtc.PeerConnection;
-import org.saltyrtc.tasks.webrtc.SecureDataChannel;
+import org.saltyrtc.demo.app.webrtc.PeerConnectionHelper;
+import org.saltyrtc.demo.app.webrtc.SecureDataChannelContext;
 import org.saltyrtc.tasks.webrtc.WebRTCTask;
+import org.saltyrtc.tasks.webrtc.WebRTCTaskBuilder;
+import org.saltyrtc.tasks.webrtc.WebRTCTaskVersion;
+import org.saltyrtc.tasks.webrtc.crypto.DataChannelCryptoContext;
+import org.slf4j.impl.HandroidLoggerAdapter;
 import org.webrtc.DataChannel;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 
 import javax.net.ssl.SSLContext;
 
 public class MainActivity extends Activity {
-	private static final String LOG_TAG = MainActivity.class.getName();
-	private static final CryptoProvider cryptoProvider = new LazysodiumCryptoProvider();
+	@NonNull private static final String TAG = MainActivity.class.getName();
+    @NonNull private static final CryptoProvider cryptoProvider = new LazysodiumCryptoProvider();
 
-	private SaltyRTC client;
-	private WebRTCTask task;
-	private PeerConnection webrtc;
-	private SecureDataChannel sdc;
+    static {
+        HandroidLoggerAdapter.DEBUG = BuildConfig.DEBUG;
+        HandroidLoggerAdapter.ANDROID_API_LEVEL = Build.VERSION.SDK_INT;
+        HandroidLoggerAdapter.APP_NAME = "Demo";
+    }
+
+	@Nullable private SaltyRTC client;
+    @Nullable private WebRTCTask task;
+    @Nullable private PeerConnectionHelper pc;
+    @Nullable private SecureDataChannelContext dc;
 
 	private Button startButton;
-	private Button stopButton;
-	private TextView saltySignalingStateView;
-	private TextView rtcSignalingStateView;
-	private TextView rtcIceConnectionStateView;
-	private TextView rtcIceGatheringStateView;
-	private TextView saltyHandoverStateView;
-	private LinearLayout messagesLayout;
-	private ScrollView messagesScrollView;
-	private EditText textInput;
-	private Button sendButton;
+    private Button stopButton;
+    private TextView saltySignalingStateView;
+    private TextView rtcSignalingStateView;
+    private TextView rtcIceConnectionStateView;
+    private TextView rtcIceGatheringStateView;
+    private TextView saltyHandoverStateView;
+    private LinearLayout messagesLayout;
+    private ScrollView messagesScrollView;
+    private EditText textInput;
+    private Button sendButton;
 
 	@SuppressLint("SetTextI18n")
 	@Override
-	protected void onCreate(Bundle savedInstanceState) {
+    @MainThread
+	protected void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
@@ -96,12 +120,13 @@ public class MainActivity extends Activity {
 		this.sendButton = findViewById(R.id.send_button);
 
 		// Initialize states
-		this.resetStates();
+        runOnUiThread(this::resetStates);
 	}
 
 	/**
 	 * Reset all states to "Unknown".
 	 */
+    @UiThread
 	private void resetStates() {
 		this.setState(StateType.SALTY_SIGNALING, "Unknown");
 		this.setState(StateType.RTC_SIGNALING, "Unknown");
@@ -110,160 +135,172 @@ public class MainActivity extends Activity {
 		this.setState(StateType.SALTY_HANDOVER, "Unknown");
 	}
 
-	private SSLContext getSslContext() throws NoSuchAlgorithmException {
-		return SSLContext.getDefault();
-	}
-
+	@UiThread
 	private void init() throws NoSuchAlgorithmException, InvalidKeyException, CryptoException {
 		this.resetStates();
 
-		// Create SaltyRTC instances
-		this.task = new WebRTCTask();
-		this.client = new SaltyRTCBuilder(cryptoProvider)
-				.connectTo(Config.HOST, Config.PORT, this.getSslContext())
-				.withServerKey(Config.SERVER_KEY)
-				.withKeyStore(new KeyStore(cryptoProvider, Config.PRIVATE_KEY))
-				.withTrustedPeerKey(Config.TRUSTED_KEY)
-				.withPingInterval(30)
-				.withWebsocketConnectTimeout(15000)
-				.usingTasks(new Task[] { this.task })
-				.asResponder();
+		// Create SaltyRTC tasks
+		final Task[] tasks = new Task[] {
+            new WebRTCTaskBuilder()
+                .withVersion(WebRTCTaskVersion.V1)
+                .build(),
+            new WebRTCTaskBuilder()
+                .withVersion(WebRTCTaskVersion.V0)
+                .build()
+        };
 
-		// On signaling
+		// Create SaltyRTC client
+		this.client = new SaltyRTCBuilder(cryptoProvider)
+            .connectTo(Config.HOST, Config.PORT, SSLContext.getDefault())
+            .withServerKey(Config.SERVER_KEY)
+            .withKeyStore(new KeyStore(cryptoProvider, Config.PRIVATE_KEY))
+            .withTrustedPeerKey(Config.TRUSTED_KEY)
+            .withPingInterval(30)
+            .withWebsocketConnectTimeout(15000)
+            .usingTasks(tasks)
+            .asResponder();
+
+		// Bind events
 		this.client.events.signalingStateChanged.register(this.onSignalingStateChanged);
+        this.client.events.signalingConnectionLost.register(this.onSignalingConnectionLost);
+        this.client.events.close.register(this.onClose);
 		this.client.events.handover.register(this.onHandover);
 		this.client.events.applicationData.register(this.onApplicationData);
-		this.client.events.close.register(this.onClose);
-		this.client.events.signalingConnectionLost.register(this.onSignalingConnectionLost);
 	}
 
 	/**
 	 * On signaling state change.
 	 */
-	@SuppressWarnings("Convert2Lambda")
-	private final EventHandler<SignalingStateChangedEvent> onSignalingStateChanged = new EventHandler<SignalingStateChangedEvent>() {
-		@Override
-		public boolean handle(final SignalingStateChangedEvent event) {
-			MainActivity.this.setState(StateType.SALTY_SIGNALING, event.getState().name());
-			if (SignalingState.TASK == event.getState()) {
-				MainActivity.this.webrtc.handover();
-				runOnUiThread(() -> {
-					MainActivity.this.textInput.setVisibility(View.VISIBLE);
-					MainActivity.this.sendButton.setVisibility(View.VISIBLE);
-				});
-			}
-			return false;
-		}
-	};
+	private final EventHandler<SignalingStateChangedEvent> onSignalingStateChanged = event -> {
+        MainActivity.this.setState(StateType.SALTY_SIGNALING, event.getState().name());
+        if (SignalingState.TASK == event.getState()) {
+            // Store chosen task
+            final Task task = this.client.getTask();
+            if (!(task instanceof WebRTCTask)) {
+                throw new RuntimeException("Unexpected task instance!");
+            }
+            this.task = (WebRTCTask) this.client.getTask();
 
-	/**
-	 * On handover.
-	 */
-	@SuppressWarnings("Convert2Lambda")
-	private final EventHandler<HandoverEvent> onHandover = new EventHandler<HandoverEvent>() {
-		@Override
-		public boolean handle(final HandoverEvent event) {
-			runOnUiThread(() -> {
-				MainActivity.this.sendButton.setEnabled(true);
-				MainActivity.this.setState(StateType.SALTY_HANDOVER, "YES");
-			});
-			return false;
-		}
-	};
+            // Show UI elements
+            runOnUiThread(() -> {
+                MainActivity.this.textInput.setVisibility(View.VISIBLE);
+                MainActivity.this.sendButton.setVisibility(View.VISIBLE);
+            });
 
-	/**
-	 * On application message.
-	 */
-	private final EventHandler<ApplicationDataEvent> onApplicationData = new EventHandler<ApplicationDataEvent>() {
-		/**
-		 * To avoid string type compatibility problems, we encode data as UTF8 on the
-		 * browser side and decode the string from UTF8 here.
-		 */
-		@Override
-		public boolean handle(ApplicationDataEvent event) {
-			final byte[] bytes = (byte[]) event.getData();
-			Log.d(LOG_TAG, "New incoming application message: " + bytes.length + " bytes");
-            final String message = msgBytesToString(bytes);
-            Log.d(LOG_TAG, "Message is: " + message);
-            MainActivity.this.onMessage(message);
-			return false;
-		}
-	};
+            // Initialise WebRTC peer-to-peer connection
+            assert this.task != null;
+            MainActivity.this.pc = new PeerConnectionHelper(this.task, this);
+        }
+        return false;
+    };
+
+    /**
+     * On signaling connection lost.
+     */
+    private final EventHandler<SignalingConnectionLostEvent> onSignalingConnectionLost = event -> false;
 
 	/**
 	 * On close.
 	 */
-	@SuppressWarnings("Convert2Lambda")
-	private final EventHandler<CloseEvent> onClose = new EventHandler<CloseEvent>() {
-		@Override
-		public boolean handle(final CloseEvent event) {
-			runOnUiThread(() -> MainActivity.this.stop(null));
-			return false;
-		}
-	};
+	private final EventHandler<CloseEvent> onClose = event -> {
+        runOnUiThread(() -> MainActivity.this.stop(null));
+        return false;
+    };
+
+    /**
+     * On handover.
+     */
+    private final EventHandler<HandoverEvent> onHandover = event -> {
+        // Enable UI elements
+        runOnUiThread(() -> MainActivity.this.setState(StateType.SALTY_HANDOVER, "YES"));
+        return false;
+    };
+
+    /**
+     * On application message.
+     */
+    private final EventHandler<ApplicationDataEvent> onApplicationData = new EventHandler<ApplicationDataEvent>() {
+        /**
+         * To avoid string type compatibility problems, we encode data as UTF8 on the
+         * browser side and decode the string from UTF8 here.
+         */
+        @Override
+        public boolean handle(@NonNull final ApplicationDataEvent event) {
+            final ByteBuffer buffer = ByteBuffer.wrap((byte[]) event.getData());
+            Log.d(TAG, "Incoming application message: " + buffer.remaining() + " bytes");
+            final String message = StandardCharsets.UTF_8.decode(buffer).toString();
+            MainActivity.this.onMessage(message);
+            return false;
+        }
+    };
 
 	/**
-	 * On signaling connection lost.
+	 * A new data channel was created.
 	 */
-	@SuppressWarnings("Convert2Lambda")
-	private final EventHandler<SignalingConnectionLostEvent> onSignalingConnectionLost = new EventHandler<SignalingConnectionLostEvent>() {
-		@Override
-		public boolean handle(final SignalingConnectionLostEvent event) {
-			return false;
-		}
-	};
+    @AnyThread
+	public void onDataChannel(@NonNull final DataChannel dc) {
+		// Handle incoming message
+        final Unchunker.MessageListener messageListener = buffer -> {
+            // Decrypt
+            final byte[] bytes;
+            try {
+                bytes = Objects.requireNonNull(this.dc).crypto.decrypt(new Box(buffer, DataChannelCryptoContext.NONCE_LENGTH));
+            } catch (ValidationError | ProtocolException error) {
+                Log.e(TAG, "Invalid packet received", error);
+                return;
+            } catch (CryptoException error) {
+                Log.e(TAG, "Unable to encrypt", error);
+                return;
+            }
+            Log.d(TAG, "Data channel " + dc.label() + " incoming message of length " + bytes.length);
 
-	private static String msgBytesToString(byte[] bytes) {
-		if (bytes.length < 255) {
-			return new String(bytes, StandardCharsets.UTF_8);
-		} else {
-			return "[" + bytes.length / 1024 + " KiB binary data]";
-		}
-	}
+            // Convert to string
+            // TODO: This is ugly... we should use a separate channel instead
+            final String message;
+            if (bytes.length < 255) {
+                message = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(bytes)).toString();
+            } else {
+                message = "[" + bytes.length / 1024 + " KiB binary data]";
+            }
 
-	/**
-	 * A new secure data channel was created.
-	 */
-	public void onNewSdc(final SecureDataChannel sdc) {
-		sdc.registerObserver(new DataChannel.Observer() {
-			@Override
-			public void onBufferedAmountChange(long l) {
-				Log.d(LOG_TAG, "Buffered amount changed: " + l);
-			}
+            // Display
+            this.onMessage(message);
+        };
 
-			@Override
-			public void onStateChange() {
-				Log.d(LOG_TAG, "State changed: " + sdc.state());
-			}
+        // Create container
+		final SecureDataChannelContext sdc = new SecureDataChannelContext(
+		    dc, Objects.requireNonNull(this.task), messageListener);
 
-			/**
-			 * Handle incoming messages.
-			 *
-			 * SaltyRTC only supports binary data, so we encode data as UTF8 on
-			 * the browser side and decode the string from UTF8 here.
-			 */
-			@Override
-			public void onMessage(DataChannel.Buffer buffer) {
-				final byte[] bytes = buffer.data.array();
-				Log.d(LOG_TAG, "New incoming datachannel message: " + bytes.length + " bytes");
-                final String message = msgBytesToString(bytes);
-                Log.d(LOG_TAG, "Message is: " + message);
-                MainActivity.this.onMessage(message);
-			}
-		});
-		this.sdc = sdc;
+		// Handle incoming chunks
+        dc.registerObserver(new DataChannel.Observer() {
+            @Override
+            public void onBufferedAmountChange(final long bufferedAmount) {}
+
+            @Override
+            public void onStateChange() {}
+
+            @Override
+            public void onMessage(DataChannel.Buffer buffer) {
+                Log.d(TAG, "Data channel " + dc.label() + " incoming chunk of length " +
+                    buffer.data.remaining());
+                sdc.unchunk(buffer.data);
+            }
+        });
+        this.dc = sdc;
+
+		// Enable send button
+		runOnUiThread(() -> MainActivity.this.sendButton.setEnabled(true));
 	}
 
 	/**
 	 * Start SaltyRTC client.
 	 */
 	@UiThread
-	public void start(View view) {
-		Log.d(LOG_TAG, "Starting SaltyRTC client...");
+	public void start(@NonNull final View view) {
+		Log.d(TAG, "Starting SaltyRTC client...");
 		try {
 			this.init();
-			this.webrtc = new PeerConnection(this.task, this);
-			this.client.connect();
+			Objects.requireNonNull(this.client).connect();
 			this.startButton.setEnabled(false);
 			this.stopButton.setEnabled(true);
 			this.messagesLayout.removeAllViewsInLayout();
@@ -277,28 +314,36 @@ public class MainActivity extends Activity {
 	 * Stop SaltyRTC client.
 	 */
 	@UiThread
-	public synchronized void stop(View view) {
-		if (this.sdc != null) {
-			Log.d(LOG_TAG, "Closing secure data channel...");
-			this.sdc.close();
-			this.sdc.dispose();
+	public void stop(@Nullable final View view) {
+		if (this.dc != null) {
+			Log.d(TAG, "Closing secure data channel...");
+			this.dc.dc.close();
+			this.dc.dc.dispose();
+			this.dc = null;
 		}
 
-		Log.d(LOG_TAG, "Stopping WebRTC task...");
-		this.task.close(CloseCode.CLOSING_NORMAL);
+		if (this.task != null) {
+            Log.d(TAG, "Stopping WebRTC task...");
+            this.task.close(CloseCode.CLOSING_NORMAL);
+        }
 
-		Log.d(LOG_TAG, "Stopping SaltyRTC client...");
-		this.client.disconnect();
-		this.client.events.clearAll();
-		this.client = null;
+		if (this.client != null) {
+            Log.d(TAG, "Stopping SaltyRTC client...");
+            this.client.disconnect();
+            this.client.events.clearAll();
+            this.client = null;
+        }
 
-		Log.d(LOG_TAG, "Stopping WebRTC connection...");
-		this.webrtc.dispose();
-		this.webrtc = null;
+		if (this.pc != null) {
+            Log.d(TAG, "Stopping WebRTC connection...");
+            this.pc.close();
+            this.pc = null;
+        }
 
 		this.startButton.setEnabled(true);
 		this.stopButton.setEnabled(false);
 		this.textInput.setVisibility(View.INVISIBLE);
+		this.textInput.setEnabled(true);
 		this.sendButton.setVisibility(View.INVISIBLE);
 	}
 
@@ -307,20 +352,21 @@ public class MainActivity extends Activity {
 	 *
 	 * This method may be called from a background thread.
 	 */
-	public void setState(final StateType type, final String state) {
+	@AnyThread
+	public void setState(@NonNull final StateType type, @NonNull final String state) {
 		runOnUiThread(() -> {
 			switch (type) {
 				case SALTY_SIGNALING:
-					MainActivity.this.saltySignalingStateView.setText(state);
+                    MainActivity.this.saltySignalingStateView.setText(state);
 					break;
 				case RTC_SIGNALING:
-					MainActivity.this.rtcSignalingStateView.setText(state);
+                    MainActivity.this.rtcSignalingStateView.setText(state);
 					break;
 				case RTC_ICE_CONNECTION:
-					MainActivity.this.rtcIceConnectionStateView.setText(state);
+                    MainActivity.this.rtcIceConnectionStateView.setText(state);
 					break;
 				case RTC_ICE_GATHERING:
-					MainActivity.this.rtcIceGatheringStateView.setText(state);
+                    MainActivity.this.rtcIceGatheringStateView.setText(state);
 					break;
 				case SALTY_HANDOVER:
 					MainActivity.this.saltyHandoverStateView.setText(state);
@@ -330,11 +376,12 @@ public class MainActivity extends Activity {
 
 	}
 
-	private TextView getMessageTextView(int colorResource, String text) {
+    @AnyThread
+    @NonNull private TextView getMessageTextView(final int colorResource, @NonNull final String text) {
 		// Create text view
 		final TextView view = new TextView(this);
 		view.setText(text);
-		view.setBackgroundColor(getResources().getColor(colorResource));
+		view.setBackgroundColor(getResources().getColor(colorResource, null));
 
 		// Set layout parameters
 		final LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
@@ -347,43 +394,101 @@ public class MainActivity extends Activity {
 		return view;
 	}
 
+    /**
+     * Handle incoming message.
+     */
+    @AnyThread
+    public void onMessage(@NonNull final String message) {
+        final View view = this.getMessageTextView(R.color.colorMessageIn, message);
+        runOnUiThread(() -> MainActivity.this.showMessage(view));
+    }
+
 	/**
 	 * Show message and scroll to bottom.
 	 */
 	@UiThread
-	private void showMessage(final View view) {
+	private void showMessage(@NonNull final View view) {
 		MainActivity.this.messagesLayout.addView(view);
 		MainActivity.this.messagesScrollView.post(() -> MainActivity.this.messagesScrollView.fullScroll(ScrollView.FOCUS_DOWN));
 	}
 
 	/**
-	 * Handle incoming message.
-	 */
-	@AnyThread
-	public void onMessage(String message) {
-		final View view = this.getMessageTextView(R.color.colorMessageIn, message);
-		runOnUiThread(() -> MainActivity.this.showMessage(view));
-	}
-
-	/**
-	 * Send message via DC.
+	 * Send message via the secure data channel.
 	 */
 	@UiThread
-	public void sendDc(View view) {
-		Log.d(LOG_TAG, "Sending message...");
-		final String text = this.textInput.getText().toString();
-		final ByteBuffer bytes = StandardCharsets.UTF_8.encode(text);
-		this.sdc.send(new DataChannel.Buffer(bytes, true));
-		final View msgView = this.getMessageTextView(R.color.colorMessageOut, text);
-		runOnUiThread(() -> MainActivity.this.showMessage(msgView));
-		this.textInput.setText("");
-	}
+	public void sendData(@NonNull final View view) {
+	    // Fetch from input and encode
+        final String text = this.textInput.getText().toString();
+        final ByteBuffer buffer = StandardCharsets.UTF_8.encode(text);
 
+        // Disable send-related element until sent
+        this.textInput.setEnabled(false);
+        this.sendButton.setEnabled(false);
+
+	    // Send message
+	    final SecureDataChannelContext dc = Objects.requireNonNull(this.dc);
+	    Log.d(TAG, "Data channel " + dc.dc.label() + " outgoing message of length " +
+            buffer.remaining());
+	    dc.enqueue(() -> {
+            // Strip the buffer's array from unnecessary bytes
+            // TODO: Fix the crypto API to use ByteBuffer - this is terrible.
+            final byte[] bytes = Arrays.copyOf(buffer.array(), buffer.remaining());
+
+	        // Encrypt
+            final Box box;
+            try {
+                box = dc.crypto.encrypt(bytes);
+            } catch (CryptoException error) {
+                Log.e(TAG, "Unable to encrypt", error);
+                return;
+            } catch (OverflowException error) {
+                Log.e(TAG, "CSN overflow", error);
+                return;
+            }
+
+            // Write chunks
+            final Chunker chunker = dc.chunk(ByteBuffer.wrap(box.toBytes()));
+            while (chunker.hasNext()) {
+                // Wait until we can send
+                // Note: This will block!
+                try {
+                    dc.fcdc.ready().get();
+                } catch (ExecutionException error) {
+                    // Should not happen
+                    Log.e(TAG, "Woops!", error);
+                    return;
+                } catch (InterruptedException error) {
+                    // Can happen when the channel has been closed abruptly
+                    Log.e(TAG, "Unable to send pending chunk! Channel closed abruptly?", error);
+                    return;
+                }
+
+                // Write chunk
+                final DataChannel.Buffer chunk = new DataChannel.Buffer(chunker.next(), true);
+                Log.d(TAG, "Data channel " + dc.dc.label() + " outgoing chunk of length " +
+                    chunk.data.remaining());
+                dc.fcdc.write(chunk);
+            }
+        }).thenRun(() -> runOnUiThread(() -> {
+            // Re-enable input element
+            this.textInput.setText("");
+            this.textInput.setEnabled(true);
+            this.sendButton.setEnabled(true);
+
+            // Show sent message
+            final View msgView = this.getMessageTextView(R.color.colorMessageOut, text);
+            this.showMessage(msgView);
+        })).exceptionally(error -> {
+            this.stop(null);
+            return null;
+        });
+	}
 
 	/**
 	 * Show key info.
 	 */
-	public void showKeyInfo(View view) throws CryptoException {
+    @UiThread
+	public void showKeyInfo(@NonNull final View view) throws CryptoException {
 		final AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setCancelable(true);
 		builder.setTitle("Key Info");

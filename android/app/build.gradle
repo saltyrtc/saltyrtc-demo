@@ -20,7 +20,7 @@ android {
 
     defaultConfig {
         applicationId "org.saltyrtc.demo.app"
-        minSdkVersion 21
+        minSdkVersion 24
         targetSdkVersion 28
         versionCode 2
         versionName "1.1"
@@ -45,8 +45,7 @@ android {
 repositories {
     jcenter()
     maven { url "https://dl.bintray.com/terl/lazysodium-maven" }
-    maven { url "http://dl.bintray.com/saltyrtc/maven" }
-    maven { url "http://dl.bintray.com/threema/maven" }
+    maven { url "https://dl.bintray.com/threema/maven" }
     maven {
         url 'https://maven.google.com/'
         name 'Google'
@@ -54,21 +53,25 @@ repositories {
 }
 
 dependencies {
-    // JNA
-    implementation 'net.java.dev.jna:jna:5.2.0@aar'
-
     // Android annotations
     implementation 'com.android.support:support-annotations:28.0.0'
 
     // Android logging
-    implementation 'com.noveogroup.android:android-logger:1.3.1'
+    implementation 'sk.baka.slf4j:slf4j-handroid:1.7.27'
+
+    // WebRTC
+    implementation 'ch.threema.webrtc:webrtc-android:74.0.0'
 
     // NaCl library
+    implementation 'net.java.dev.jna:jna:5.2.0@aar'
     implementation 'com.goterl.lazycode:lazysodium-android:3.6.0@aar'
 
     // SaltyRTC
-    implementation('org.saltyrtc.client:saltyrtc-client:0.12.0', {
+    implementation('org.saltyrtc.client:saltyrtc-client:0.13.0', {
         exclude group: 'org.json', module: 'json'
     })
-    implementation 'org.saltyrtc.tasks.webrtc:saltyrtc-task-webrtc:0.16.1'
+    implementation 'org.saltyrtc.tasks.webrtc:saltyrtc-task-webrtc:0.17.0'
+
+    // Chunking
+    implementation 'org.saltyrtc.chunked-dc:chunked-dc:1.0.0'
 }

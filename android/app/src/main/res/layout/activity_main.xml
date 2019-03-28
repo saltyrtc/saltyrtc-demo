@@ -137,9 +137,9 @@
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
         android:visibility="invisible"
-        android:onClick="sendDc"
+        android:onClick="sendData"
         android:enabled="false"
-        android:text="Send via DC"/>
+        android:text="Send via Data Channel"/>
 
     <EditText
         android:id="@+id/chat_input"

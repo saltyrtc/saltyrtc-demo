@@ -5,7 +5,6 @@
  * or the MIT license <see LICENSE-MIT file>, at your option. This file may not be
  * copied, modified, or distributed except according to those terms.
  */
-
 package org.saltyrtc.demo.app.utils;
 
 import com.goterl.lazycode.lazysodium.LazySodiumAndroid;
