@@ -5,18 +5,21 @@
  * or the MIT license <see LICENSE-MIT file>, at your option. This file may not be
  * copied, modified, or distributed except according to those terms.
  */
-package org.saltyrtc.demo.app;
+package org.saltyrtc.demo.app.webrtc;
 
 import android.util.Log;
 
 import org.saltyrtc.client.exceptions.ConnectionException;
+import org.saltyrtc.demo.app.BuildConfig;
+import org.saltyrtc.demo.app.Config;
+import org.saltyrtc.demo.app.MainActivity;
+import org.saltyrtc.demo.app.StateType;
 import org.saltyrtc.tasks.webrtc.SecureDataChannel;
 import org.saltyrtc.tasks.webrtc.WebRTCTask;
 import org.webrtc.DataChannel;
 import org.webrtc.IceCandidate;
 import org.webrtc.MediaConstraints;
 import org.webrtc.MediaStream;
-import org.webrtc.PeerConnection;
 import org.webrtc.PeerConnectionFactory;
 import org.webrtc.RtpReceiver;
 import org.webrtc.SdpObserver;
@@ -25,17 +28,17 @@ import org.webrtc.SessionDescription;
 import java.util.ArrayList;
 import java.util.List;
 
-class WebRTC {
-	private static final String LOG_TAG = WebRTC.class.getName();
+public class PeerConnection {
+	private static final String LOG_TAG = PeerConnection.class.getName();
 	private static final String DC_LABEL = "much-secure";
 
-	private final PeerConnection pc;
+	private final org.webrtc.PeerConnection pc;
 	private final WebRTCTask task;
 	private final MediaConstraints constraints;
 	private final PeerConnectionFactory factory;
 	private final MainActivity activity;
 
-	WebRTC(WebRTCTask task, MainActivity activity) {
+	public PeerConnection(WebRTCTask task, MainActivity activity) {
 		this.task = task;
 		this.activity = activity;
 
@@ -47,13 +50,13 @@ class WebRTC {
 		);
 
 		// Set ICE servers
-		final List<PeerConnection.IceServer> iceServers = new ArrayList<>();
+		final List<org.webrtc.PeerConnection.IceServer> iceServers = new ArrayList<>();
 		iceServers.add(
-			PeerConnection.IceServer.builder("stun:" + Config.STUN_SERVER).createIceServer()
+			org.webrtc.PeerConnection.IceServer.builder("stun:" + Config.STUN_SERVER).createIceServer()
 		);
 		if (Config.TURN_SERVER != null) {
 			iceServers.add(
-				PeerConnection.IceServer.builder("turn:" + Config.TURN_SERVER)
+				org.webrtc.PeerConnection.IceServer.builder("turn:" + Config.TURN_SERVER)
 						.setUsername(Config.TURN_USER)
 						.setPassword(Config.TURN_PASS)
 						.createIceServer()
@@ -76,7 +79,7 @@ class WebRTC {
 	private class TaskMessageHandler implements org.saltyrtc.tasks.webrtc.events.MessageHandler {
 		@Override
 		public void onOffer(SessionDescription sd) {
-			WebRTC.this.onOfferReceived(sd);
+			PeerConnection.this.onOfferReceived(sd);
 		}
 
 		@Override
@@ -86,7 +89,7 @@ class WebRTC {
 
 		@Override
 		public void onCandidates(List<IceCandidate> candidates) {
-			WebRTC.this.onIceCandidatesReceived(candidates);
+			PeerConnection.this.onIceCandidatesReceived(candidates);
 		}
 	}
 
@@ -105,7 +108,7 @@ class WebRTC {
 			@Override
 			public void onSetSuccess() {
 				Log.d(LOG_TAG, "Remote description set");
-				WebRTC.this.onRemoteDescriptionSet();
+				PeerConnection.this.onRemoteDescriptionSet();
 			}
 
 			@Override
@@ -126,7 +129,7 @@ class WebRTC {
 			public void onCreateSuccess(SessionDescription sd) {
 				Log.d(LOG_TAG, "Created answer");
 				this.sd = sd;
-				WebRTC.this.pc.setLocalDescription(this, sd);
+				PeerConnection.this.pc.setLocalDescription(this, sd);
 			}
 
 			@Override
@@ -138,7 +141,7 @@ class WebRTC {
 			public void onSetSuccess() {
 				Log.d(LOG_TAG, "Local description set");
 				try {
-					WebRTC.this.task.sendAnswer(this.sd);
+					PeerConnection.this.task.sendAnswer(this.sd);
 					Log.d(LOG_TAG, "Sent answer");
 				} catch (final ConnectionException e) {
 					Log.e(LOG_TAG, "Could not send answer: " + e.getMessage());
@@ -166,13 +169,13 @@ class WebRTC {
 		@Override
 		public void onSignalingChange(org.webrtc.PeerConnection.SignalingState signalingState) {
 			Log.d(LOG_TAG, "Signaling state change: " + signalingState.name());
-			WebRTC.this.activity.setState(StateType.RTC_SIGNALING, signalingState.name());
+			PeerConnection.this.activity.setState(StateType.RTC_SIGNALING, signalingState.name());
 		}
 
 		@Override
-		public void onIceConnectionChange(PeerConnection.IceConnectionState iceConnectionState) {
+		public void onIceConnectionChange(org.webrtc.PeerConnection.IceConnectionState iceConnectionState) {
 			Log.d(LOG_TAG, "ICE connection change to " + iceConnectionState.name());
-			WebRTC.this.activity.setState(StateType.RTC_ICE_CONNECTION, iceConnectionState.name());
+			PeerConnection.this.activity.setState(StateType.RTC_ICE_CONNECTION, iceConnectionState.name());
 		}
 
 		@Override
@@ -181,9 +184,9 @@ class WebRTC {
 		}
 
 		@Override
-		public void onIceGatheringChange(PeerConnection.IceGatheringState iceGatheringState) {
+		public void onIceGatheringChange(org.webrtc.PeerConnection.IceGatheringState iceGatheringState) {
 			Log.d(LOG_TAG, "ICE gathering change: " + iceGatheringState.name());
-			WebRTC.this.activity.setState(StateType.RTC_ICE_GATHERING, iceGatheringState.name());
+			PeerConnection.this.activity.setState(StateType.RTC_ICE_GATHERING, iceGatheringState.name());
 		}
 
 		/**
@@ -193,7 +196,7 @@ class WebRTC {
 		public void onIceCandidate(IceCandidate iceCandidate) {
 			Log.d(LOG_TAG, "New ICE candidate");
 			try {
-				WebRTC.this.task.sendCandidates(iceCandidate);
+				PeerConnection.this.task.sendCandidates(iceCandidate);
 			} catch (final ConnectionException e) {
 				Log.e(LOG_TAG, "Could not send ICE candidate: " + e.getMessage());
 			}
@@ -223,10 +226,10 @@ class WebRTC {
 			}
 
 			// If the newly created data channel is the one we want, wrap it.
-			final SecureDataChannel secureDataChannel = WebRTC.this.task.wrapDataChannel(dc);
+			final SecureDataChannel secureDataChannel = PeerConnection.this.task.wrapDataChannel(dc);
 
 			// Notify main class about this new data channel.
-			WebRTC.this.activity.onNewSdc(secureDataChannel);
+			PeerConnection.this.activity.onNewSdc(secureDataChannel);
 		}
 
 		@Override
@@ -243,7 +246,7 @@ class WebRTC {
 	/**
 	 * Initiate handover.
 	 */
-	void handover() {
+	public void handover() {
 		this.task.handover(this.pc);
 	}
 
@@ -252,7 +255,7 @@ class WebRTC {
 	 *
 	 * It cannot be reused afterwards.
 	 */
-	void dispose() {
+	public void dispose() {
 		this.pc.dispose();
 		this.factory.dispose();
 	}

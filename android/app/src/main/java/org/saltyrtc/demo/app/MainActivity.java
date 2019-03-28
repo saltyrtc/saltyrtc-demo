@@ -40,6 +40,7 @@ import org.saltyrtc.client.signaling.CloseCode;
 import org.saltyrtc.client.signaling.state.SignalingState;
 import org.saltyrtc.client.tasks.Task;
 import org.saltyrtc.demo.app.utils.LazysodiumCryptoProvider;
+import org.saltyrtc.demo.app.webrtc.PeerConnection;
 import org.saltyrtc.tasks.webrtc.SecureDataChannel;
 import org.saltyrtc.tasks.webrtc.WebRTCTask;
 import org.webrtc.DataChannel;
@@ -56,7 +57,7 @@ public class MainActivity extends Activity {
 
 	private SaltyRTC client;
 	private WebRTCTask task;
-	private WebRTC webrtc;
+	private PeerConnection webrtc;
 	private SecureDataChannel sdc;
 
 	private Button startButton;
@@ -223,7 +224,7 @@ public class MainActivity extends Activity {
 	/**
 	 * A new secure data channel was created.
 	 */
-	void onNewSdc(final SecureDataChannel sdc) {
+	public void onNewSdc(final SecureDataChannel sdc) {
 		sdc.registerObserver(new DataChannel.Observer() {
 			@Override
 			public void onBufferedAmountChange(long l) {
@@ -261,7 +262,7 @@ public class MainActivity extends Activity {
 		Log.d(LOG_TAG, "Starting SaltyRTC client...");
 		try {
 			this.init();
-			this.webrtc = new WebRTC(this.task, this);
+			this.webrtc = new PeerConnection(this.task, this);
 			this.client.connect();
 			this.startButton.setEnabled(false);
 			this.stopButton.setEnabled(true);
