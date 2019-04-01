@@ -12,7 +12,7 @@ import android.support.annotation.Nullable;
 
 public final class Config {
     @NonNull public static String HOST = "server.saltyrtc.org";
-	public static int PORT = 443;
+    public static int PORT = 443;
 
     @NonNull public static String STUN_SERVER = "stun.l.google.com:19302";
     @Nullable public static String TURN_SERVER = null;

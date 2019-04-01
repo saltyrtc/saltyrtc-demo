@@ -77,12 +77,12 @@ public class MainActivity extends Activity {
     }
 
     @NonNull private final Logger log = LoggerFactory.getLogger("SaltyRTC.Demo.MainActivity");
-	@Nullable private SaltyRTC client;
+    @Nullable private SaltyRTC client;
     @Nullable private WebRTCTask task;
     @Nullable private PeerConnectionHelper pc;
     @Nullable private SecureDataChannelContext dc;
 
-	private Button startButton;
+    private Button startButton;
     private Button stopButton;
     private TextView saltySignalingStateView;
     private TextView rtcSignalingStateView;
@@ -94,52 +94,52 @@ public class MainActivity extends Activity {
     private EditText textInput;
     private Button sendButton;
 
-	@SuppressLint("SetTextI18n")
-	@Override
+    @SuppressLint("SetTextI18n")
+    @Override
     @MainThread
-	protected void onCreate(@Nullable Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
 
-		// Get button views
-		this.startButton = findViewById(R.id.button_start);
-		this.stopButton = findViewById(R.id.button_stop);
+        // Get button views
+        this.startButton = findViewById(R.id.button_start);
+        this.stopButton = findViewById(R.id.button_stop);
 
-		// Get state views
-		this.saltySignalingStateView = findViewById(R.id.salty_signaling_state);
-		this.rtcSignalingStateView = findViewById(R.id.rtc_signaling_state);
-		this.rtcIceConnectionStateView = findViewById(R.id.rtc_ice_connection_state);
-		this.rtcIceGatheringStateView = findViewById(R.id.rtc_ice_gathering_state);
-		this.saltyHandoverStateView = findViewById(R.id.salty_handover_state);
+        // Get state views
+        this.saltySignalingStateView = findViewById(R.id.salty_signaling_state);
+        this.rtcSignalingStateView = findViewById(R.id.rtc_signaling_state);
+        this.rtcIceConnectionStateView = findViewById(R.id.rtc_ice_connection_state);
+        this.rtcIceGatheringStateView = findViewById(R.id.rtc_ice_gathering_state);
+        this.saltyHandoverStateView = findViewById(R.id.salty_handover_state);
 
-		// Get other views
-		this.messagesLayout = findViewById(R.id.messages);
-		this.messagesScrollView = findViewById(R.id.messagesScroll);
-		this.textInput = findViewById(R.id.chat_input);
-		this.sendButton = findViewById(R.id.send_button);
+        // Get other views
+        this.messagesLayout = findViewById(R.id.messages);
+        this.messagesScrollView = findViewById(R.id.messagesScroll);
+        this.textInput = findViewById(R.id.chat_input);
+        this.sendButton = findViewById(R.id.send_button);
 
-		// Initialize states
+        // Initialize states
         runOnUiThread(this::resetStates);
-	}
+    }
 
-	/**
-	 * Reset all states to "Unknown".
-	 */
+    /**
+     * Reset all states to "Unknown".
+     */
     @UiThread
-	private void resetStates() {
-		this.setState(StateType.SALTY_SIGNALING, "Unknown");
-		this.setState(StateType.RTC_SIGNALING, "Unknown");
-		this.setState(StateType.RTC_ICE_CONNECTION, "Unknown");
-		this.setState(StateType.RTC_ICE_GATHERING, "Unknown");
-		this.setState(StateType.SALTY_HANDOVER, "Unknown");
-	}
+    private void resetStates() {
+        this.setState(StateType.SALTY_SIGNALING, "Unknown");
+        this.setState(StateType.RTC_SIGNALING, "Unknown");
+        this.setState(StateType.RTC_ICE_CONNECTION, "Unknown");
+        this.setState(StateType.RTC_ICE_GATHERING, "Unknown");
+        this.setState(StateType.SALTY_HANDOVER, "Unknown");
+    }
 
-	@UiThread
-	private void init() throws NoSuchAlgorithmException, InvalidKeyException, CryptoException {
-		this.resetStates();
+    @UiThread
+    private void init() throws NoSuchAlgorithmException, InvalidKeyException, CryptoException {
+        this.resetStates();
 
-		// Create SaltyRTC tasks
-		final Task[] tasks = new Task[] {
+        // Create SaltyRTC tasks
+        final Task[] tasks = new Task[] {
             new WebRTCTaskBuilder()
                 .withVersion(WebRTCTaskVersion.V1)
                 .build(),
@@ -148,8 +148,8 @@ public class MainActivity extends Activity {
                 .build()
         };
 
-		// Create SaltyRTC client
-		this.client = new SaltyRTCBuilder(cryptoProvider)
+        // Create SaltyRTC client
+        this.client = new SaltyRTCBuilder(cryptoProvider)
             .connectTo(Config.HOST, Config.PORT, SSLContext.getDefault())
             .withServerKey(Config.SERVER_KEY)
             .withKeyStore(new KeyStore(cryptoProvider, Config.PRIVATE_KEY))
@@ -159,18 +159,18 @@ public class MainActivity extends Activity {
             .usingTasks(tasks)
             .asResponder();
 
-		// Bind events
-		this.client.events.signalingStateChanged.register(this.onSignalingStateChanged);
+        // Bind events
+        this.client.events.signalingStateChanged.register(this.onSignalingStateChanged);
         this.client.events.signalingConnectionLost.register(this.onSignalingConnectionLost);
         this.client.events.close.register(this.onClose);
-		this.client.events.handover.register(this.onHandover);
-		this.client.events.applicationData.register(this.onApplicationData);
-	}
+        this.client.events.handover.register(this.onHandover);
+        this.client.events.applicationData.register(this.onApplicationData);
+    }
 
-	/**
-	 * On signaling state change.
-	 */
-	private final EventHandler<SignalingStateChangedEvent> onSignalingStateChanged = event -> {
+    /**
+     * On signaling state change.
+     */
+    private final EventHandler<SignalingStateChangedEvent> onSignalingStateChanged = event -> {
         MainActivity.this.setState(StateType.SALTY_SIGNALING, event.getState().name());
         if (SignalingState.TASK == event.getState()) {
             // Store chosen task
@@ -198,10 +198,10 @@ public class MainActivity extends Activity {
      */
     private final EventHandler<SignalingConnectionLostEvent> onSignalingConnectionLost = event -> false;
 
-	/**
-	 * On close.
-	 */
-	private final EventHandler<CloseEvent> onClose = event -> {
+    /**
+     * On close.
+     */
+    private final EventHandler<CloseEvent> onClose = event -> {
         runOnUiThread(() -> MainActivity.this.stop(null));
         return false;
     };
@@ -233,12 +233,12 @@ public class MainActivity extends Activity {
         }
     };
 
-	/**
-	 * A new data channel was created.
-	 */
+    /**
+     * A new data channel was created.
+     */
     @AnyThread
-	public void onDataChannel(@NonNull final DataChannel dc) {
-		// Handle incoming message
+    public void onDataChannel(@NonNull final DataChannel dc) {
+        // Handle incoming message
         final Unchunker.MessageListener messageListener = buffer -> {
             // Decrypt
             final byte[] bytes;
@@ -267,10 +267,10 @@ public class MainActivity extends Activity {
         };
 
         // Create container
-		final SecureDataChannelContext sdc = new SecureDataChannelContext(
-		    dc, Objects.requireNonNull(this.task), messageListener);
+        final SecureDataChannelContext sdc = new SecureDataChannelContext(
+            dc, Objects.requireNonNull(this.task), messageListener);
 
-		// Handle incoming chunks
+        // Handle incoming chunks
         dc.registerObserver(new DataChannel.Observer() {
             @Override
             public void onBufferedAmountChange(final long bufferedAmount) {}
@@ -287,111 +287,111 @@ public class MainActivity extends Activity {
         });
         this.dc = sdc;
 
-		// Enable send button
-		runOnUiThread(() -> MainActivity.this.sendButton.setEnabled(true));
-	}
+        // Enable send button
+        runOnUiThread(() -> MainActivity.this.sendButton.setEnabled(true));
+    }
 
-	/**
-	 * Start SaltyRTC client.
-	 */
-	@UiThread
-	public void start(@NonNull final View view) {
-		log.debug("Starting SaltyRTC client...");
-		try {
-			this.init();
-			Objects.requireNonNull(this.client).connect();
-			this.startButton.setEnabled(false);
-			this.stopButton.setEnabled(true);
-			this.messagesLayout.removeAllViewsInLayout();
-			this.setState(StateType.SALTY_HANDOVER, "NO");
-		} catch (NoSuchAlgorithmException | InvalidKeyException | ConnectionException | CryptoException e) {
-			e.printStackTrace();
-		}
-	}
+    /**
+     * Start SaltyRTC client.
+     */
+    @UiThread
+    public void start(@NonNull final View view) {
+        log.debug("Starting SaltyRTC client...");
+        try {
+            this.init();
+            Objects.requireNonNull(this.client).connect();
+            this.startButton.setEnabled(false);
+            this.stopButton.setEnabled(true);
+            this.messagesLayout.removeAllViewsInLayout();
+            this.setState(StateType.SALTY_HANDOVER, "NO");
+        } catch (NoSuchAlgorithmException | InvalidKeyException | ConnectionException | CryptoException e) {
+            e.printStackTrace();
+        }
+    }
 
-	/**
-	 * Stop SaltyRTC client.
-	 */
-	@UiThread
-	public void stop(@Nullable final View view) {
-		if (this.dc != null) {
-			log.debug("Closing secure data channel...");
-			this.dc.dc.close();
-			this.dc.dc.dispose();
-			this.dc = null;
-		}
+    /**
+     * Stop SaltyRTC client.
+     */
+    @UiThread
+    public void stop(@Nullable final View view) {
+        if (this.dc != null) {
+            log.debug("Closing secure data channel...");
+            this.dc.dc.close();
+            this.dc.dc.dispose();
+            this.dc = null;
+        }
 
-		if (this.task != null) {
+        if (this.task != null) {
             log.debug("Stopping WebRTC task...");
             this.task.close(CloseCode.CLOSING_NORMAL);
         }
 
-		if (this.client != null) {
+        if (this.client != null) {
             log.debug("Stopping SaltyRTC client...");
             this.client.disconnect();
             this.client.events.clearAll();
             this.client = null;
         }
 
-		if (this.pc != null) {
+        if (this.pc != null) {
             log.debug("Stopping WebRTC connection...");
             this.pc.close();
             this.pc = null;
         }
 
-		this.startButton.setEnabled(true);
-		this.stopButton.setEnabled(false);
-		this.textInput.setVisibility(View.INVISIBLE);
-		this.textInput.setEnabled(true);
-		this.sendButton.setVisibility(View.INVISIBLE);
-	}
+        this.startButton.setEnabled(true);
+        this.stopButton.setEnabled(false);
+        this.textInput.setVisibility(View.INVISIBLE);
+        this.textInput.setEnabled(true);
+        this.sendButton.setVisibility(View.INVISIBLE);
+    }
 
-	/**
-	 * Set a state field.
-	 *
-	 * This method may be called from a background thread.
-	 */
-	@AnyThread
-	public void setState(@NonNull final StateType type, @NonNull final String state) {
-		runOnUiThread(() -> {
-			switch (type) {
-				case SALTY_SIGNALING:
+    /**
+     * Set a state field.
+     *
+     * This method may be called from a background thread.
+     */
+    @AnyThread
+    public void setState(@NonNull final StateType type, @NonNull final String state) {
+        runOnUiThread(() -> {
+            switch (type) {
+                case SALTY_SIGNALING:
                     MainActivity.this.saltySignalingStateView.setText(state);
-					break;
-				case RTC_SIGNALING:
+                    break;
+                case RTC_SIGNALING:
                     MainActivity.this.rtcSignalingStateView.setText(state);
-					break;
-				case RTC_ICE_CONNECTION:
+                    break;
+                case RTC_ICE_CONNECTION:
                     MainActivity.this.rtcIceConnectionStateView.setText(state);
-					break;
-				case RTC_ICE_GATHERING:
+                    break;
+                case RTC_ICE_GATHERING:
                     MainActivity.this.rtcIceGatheringStateView.setText(state);
-					break;
-				case SALTY_HANDOVER:
-					MainActivity.this.saltyHandoverStateView.setText(state);
-					break;
-			}
-		});
+                    break;
+                case SALTY_HANDOVER:
+                    MainActivity.this.saltyHandoverStateView.setText(state);
+                    break;
+            }
+        });
 
-	}
+    }
 
     @AnyThread
     @NonNull private TextView getMessageTextView(final int colorResource, @NonNull final String text) {
-		// Create text view
-		final TextView view = new TextView(this);
-		view.setText(text);
-		view.setBackgroundColor(getResources().getColor(colorResource, null));
+        // Create text view
+        final TextView view = new TextView(this);
+        view.setText(text);
+        view.setBackgroundColor(getResources().getColor(colorResource, null));
 
-		// Set layout parameters
-		final LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-				ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-		final int spacing = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, this.getResources().getDisplayMetrics());
-		params.setMargins(spacing, spacing, spacing, 0);
-		view.setPadding(spacing, spacing, spacing, spacing);
-		view.setLayoutParams(params);
+        // Set layout parameters
+        final LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        final int spacing = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, this.getResources().getDisplayMetrics());
+        params.setMargins(spacing, spacing, spacing, 0);
+        view.setPadding(spacing, spacing, spacing, spacing);
+        view.setLayoutParams(params);
 
-		return view;
-	}
+        return view;
+    }
 
     /**
      * Handle incoming message.
@@ -402,21 +402,21 @@ public class MainActivity extends Activity {
         runOnUiThread(() -> MainActivity.this.showMessage(view));
     }
 
-	/**
-	 * Show message and scroll to bottom.
-	 */
-	@UiThread
-	private void showMessage(@NonNull final View view) {
-		MainActivity.this.messagesLayout.addView(view);
-		MainActivity.this.messagesScrollView.post(() -> MainActivity.this.messagesScrollView.fullScroll(ScrollView.FOCUS_DOWN));
-	}
+    /**
+     * Show message and scroll to bottom.
+     */
+    @UiThread
+    private void showMessage(@NonNull final View view) {
+        MainActivity.this.messagesLayout.addView(view);
+        MainActivity.this.messagesScrollView.post(() -> MainActivity.this.messagesScrollView.fullScroll(ScrollView.FOCUS_DOWN));
+    }
 
-	/**
-	 * Send message via the secure data channel.
-	 */
-	@UiThread
-	public void sendData(@NonNull final View view) {
-	    // Fetch from input and encode
+    /**
+     * Send message via the secure data channel.
+     */
+    @UiThread
+    public void sendData(@NonNull final View view) {
+        // Fetch from input and encode
         final String text = this.textInput.getText().toString();
         final ByteBuffer buffer = StandardCharsets.UTF_8.encode(text);
 
@@ -424,16 +424,16 @@ public class MainActivity extends Activity {
         this.textInput.setEnabled(false);
         this.sendButton.setEnabled(false);
 
-	    // Send message
-	    final SecureDataChannelContext dc = Objects.requireNonNull(this.dc);
-	    log.debug("Data channel " + dc.dc.label() + " outgoing message of length " +
+        // Send message
+        final SecureDataChannelContext dc = Objects.requireNonNull(this.dc);
+        log.debug("Data channel " + dc.dc.label() + " outgoing message of length " +
             buffer.remaining());
-	    dc.enqueue(() -> {
+        dc.enqueue(() -> {
             // Strip the buffer's array from unnecessary bytes
             // TODO: Fix the crypto API to use ByteBuffer - this is terrible.
             final byte[] bytes = Arrays.copyOf(buffer.array(), buffer.remaining());
 
-	        // Encrypt
+            // Encrypt
             final Box box;
             try {
                 box = dc.crypto.encrypt(bytes);
@@ -481,30 +481,30 @@ public class MainActivity extends Activity {
             this.stop(null);
             return null;
         });
-	}
+    }
 
-	/**
-	 * Show key info.
-	 */
+    /**
+     * Show key info.
+     */
     @UiThread
-	public void showKeyInfo(@NonNull final View view) throws CryptoException {
-		final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder.setCancelable(true);
-		builder.setTitle("Key Info");
-		final String msg = "Public key: " +
-				new KeyStore(cryptoProvider, Config.PRIVATE_KEY).getPublicKeyHex() +
-				"\n\n" +
-				"Private key: " +
-				Config.PRIVATE_KEY +
-				"\n\n" +
-				"Trusted key: " +
-				Config.TRUSTED_KEY +
-				"\n\n" +
-				"Server public key: " +
-				Config.SERVER_KEY +
-				"\n\n";
-		builder.setMessage(msg);
-		builder.setPositiveButton("OK", (dialogInterface, i) -> dialogInterface.dismiss());
-		builder.create().show();
-	}
+    public void showKeyInfo(@NonNull final View view) throws CryptoException {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setCancelable(true);
+        builder.setTitle("Key Info");
+        final String msg = "Public key: " +
+                new KeyStore(cryptoProvider, Config.PRIVATE_KEY).getPublicKeyHex() +
+                "\n\n" +
+                "Private key: " +
+                Config.PRIVATE_KEY +
+                "\n\n" +
+                "Trusted key: " +
+                Config.TRUSTED_KEY +
+                "\n\n" +
+                "Server public key: " +
+                Config.SERVER_KEY +
+                "\n\n";
+        builder.setMessage(msg);
+        builder.setPositiveButton("OK", (dialogInterface, i) -> dialogInterface.dismiss());
+        builder.create().show();
+    }
 }
