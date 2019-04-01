@@ -9,9 +9,10 @@ package org.saltyrtc.demo.app.webrtc;
 
 import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
-import android.util.Log;
 
 import org.saltyrtc.tasks.webrtc.exceptions.IllegalStateError;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.webrtc.DataChannel;
 
 import java.util.concurrent.CompletableFuture;
@@ -23,8 +24,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 @AnyThread
 public class FlowControlledDataChannel {
-    @NonNull private static final String TAG = FlowControlledDataChannel.class.getName();
-
+    @NonNull final Logger log;
     @NonNull private final Lock lock = new ReentrantLock();
     @NonNull private final DataChannel dc;
     private final long highWaterMark;
@@ -50,6 +50,7 @@ public class FlowControlledDataChannel {
      */
     FlowControlledDataChannel(
         @NonNull final DataChannel dc, final long lowWaterMark, final long highWaterMark) {
+        this.log = LoggerFactory.getLogger("SaltyRTC.Demo.FCDC." + dc.id());
         this.dc = dc;
         this.highWaterMark = highWaterMark;
 
@@ -62,7 +63,7 @@ public class FlowControlledDataChannel {
                     // Unpause once low water mark has been reached
                     if (bufferedAmount <= lowWaterMark &&
                         !FlowControlledDataChannel.this.readyFuture.isDone()) {
-                        Log.d(TAG, FlowControlledDataChannel.this.dc.label() +
+                        log.debug(FlowControlledDataChannel.this.dc.label() +
                             " resumed (buffered=" + bufferedAmount + ")");
                         FlowControlledDataChannel.this.readyFuture.complete(null);
                     }
@@ -120,7 +121,7 @@ public class FlowControlledDataChannel {
             final long bufferedAmount = this.dc.bufferedAmount();
             if (bufferedAmount >= this.highWaterMark) {
                 this.readyFuture = new CompletableFuture<>();
-                Log.d(TAG, this.dc.label() + " paused (buffered=" + bufferedAmount + ")");
+                log.debug(this.dc.label() + " paused (buffered=" + bufferedAmount + ")");
             }
         } finally {
             lock.unlock();

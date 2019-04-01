@@ -9,12 +9,13 @@ package org.saltyrtc.demo.app.webrtc;
 
 import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
-import android.util.Log;
 
 import org.saltyrtc.chunkedDc.Chunker;
 import org.saltyrtc.chunkedDc.Unchunker;
 import org.saltyrtc.tasks.webrtc.WebRTCTask;
 import org.saltyrtc.tasks.webrtc.crypto.DataChannelCryptoContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.webrtc.DataChannel;
 
 import java.nio.ByteBuffer;
@@ -22,8 +23,7 @@ import java.util.concurrent.CompletableFuture;
 
 @AnyThread
 public class SecureDataChannelContext {
-    @NonNull private static final String TAG = SecureDataChannelContext.class.getName();
-
+    @NonNull private final Logger log;
     @NonNull public final DataChannel dc;
     @NonNull public final FlowControlledDataChannel fcdc;
     @NonNull public final DataChannelCryptoContext crypto;
@@ -35,6 +35,7 @@ public class SecureDataChannelContext {
     public SecureDataChannelContext(
         @NonNull final DataChannel dc, @NonNull final WebRTCTask task,
         @NonNull final Unchunker.MessageListener messageListener) {
+        this.log = LoggerFactory.getLogger("SaltyRTC.Demo.SDCC" + dc.id());
         this.dc = dc;
 
         // Wrap as unbounded, flow-controlled data channel
@@ -64,16 +65,16 @@ public class SecureDataChannelContext {
             public void onStateChange() {
                 switch (dc.state()) {
                     case CONNECTING:
-                        Log.d(TAG, "Data channel " + dc.label() + " connecting");
+                        log.debug("Data channel " + dc.label() + " connecting");
                         break;
                     case OPEN:
-                        Log.i(TAG, "Data channel " + dc.label() + " open");
+                        log.info("Data channel " + dc.label() + " open");
                         break;
                     case CLOSING:
-                        Log.d(TAG, "Data channel " + dc.label() + " closing");
+                        log.debug("Data channel " + dc.label() + " closing");
                         break;
                     case CLOSED:
-                        Log.i(TAG, "Data channel " + dc.label() + " closed");
+                        log.info("Data channel " + dc.label() + " closed");
                         break;
                 }
             }
@@ -92,7 +93,7 @@ public class SecureDataChannelContext {
     public CompletableFuture<?> enqueue(@NonNull final Runnable operation) {
         this.queue = this.queue.thenRunAsync(operation);
         this.queue.exceptionally(error -> {
-            Log.e(TAG, "Exception in write queue", error);
+            log.error("Exception in write queue", error);
             return null;
         });
         return this.queue;

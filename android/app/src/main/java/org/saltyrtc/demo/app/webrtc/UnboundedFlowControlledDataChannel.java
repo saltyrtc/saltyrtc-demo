@@ -9,7 +9,6 @@ package org.saltyrtc.demo.app.webrtc;
 
 import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
-import android.util.Log;
 
 import org.webrtc.DataChannel;
 
@@ -26,7 +25,6 @@ import java.util.concurrent.ExecutionException;
  */
 @AnyThread
 public class UnboundedFlowControlledDataChannel extends FlowControlledDataChannel {
-    @NonNull private static final String TAG = UnboundedFlowControlledDataChannel.class.getName();
     @NonNull private CompletableFuture<?> queue = this.ready();
 
     /**
@@ -71,11 +69,11 @@ public class UnboundedFlowControlledDataChannel extends FlowControlledDataChanne
                 this.ready().get();
             } catch (ExecutionException error) {
                 // Should not happen
-                Log.e(TAG, "Woops!", error);
+                log.error("Woops!", error);
                 return;
             } catch (InterruptedException error) {
                 // Can happen when the channel has been closed abruptly
-                Log.e(TAG, "Unable to send pending chunk! Channel closed abruptly?", error);
+                log.error("Unable to send pending chunk! Channel closed abruptly?", error);
                 return;
             }
 
@@ -83,7 +81,7 @@ public class UnboundedFlowControlledDataChannel extends FlowControlledDataChanne
             super.write(message);
         });
         this.queue.exceptionally(error -> {
-            Log.e(TAG, "Exception in write queue", error);
+            log.error("Exception in write queue", error);
             return null;
         });
     }

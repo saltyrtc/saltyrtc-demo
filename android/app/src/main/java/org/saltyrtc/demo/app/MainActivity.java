@@ -10,14 +10,12 @@ package org.saltyrtc.demo.app;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.AnyThread;
 import android.support.annotation.MainThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
@@ -56,6 +54,8 @@ import org.saltyrtc.tasks.webrtc.WebRTCTask;
 import org.saltyrtc.tasks.webrtc.WebRTCTaskBuilder;
 import org.saltyrtc.tasks.webrtc.WebRTCTaskVersion;
 import org.saltyrtc.tasks.webrtc.crypto.DataChannelCryptoContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.slf4j.impl.HandroidLoggerAdapter;
 import org.webrtc.DataChannel;
 
@@ -69,15 +69,14 @@ import java.util.concurrent.ExecutionException;
 import javax.net.ssl.SSLContext;
 
 public class MainActivity extends Activity {
-	@NonNull private static final String TAG = MainActivity.class.getName();
     @NonNull private static final CryptoProvider cryptoProvider = new LazysodiumCryptoProvider();
 
     static {
         HandroidLoggerAdapter.DEBUG = BuildConfig.DEBUG;
-        HandroidLoggerAdapter.ANDROID_API_LEVEL = Build.VERSION.SDK_INT;
         HandroidLoggerAdapter.APP_NAME = "Demo";
     }
 
+    @NonNull private final Logger log = LoggerFactory.getLogger("SaltyRTC.Demo.MainActivity");
 	@Nullable private SaltyRTC client;
     @Nullable private WebRTCTask task;
     @Nullable private PeerConnectionHelper pc;
@@ -227,7 +226,7 @@ public class MainActivity extends Activity {
         @Override
         public boolean handle(@NonNull final ApplicationDataEvent event) {
             final ByteBuffer buffer = ByteBuffer.wrap((byte[]) event.getData());
-            Log.d(TAG, "Incoming application message: " + buffer.remaining() + " bytes");
+            log.debug("Incoming application message: " + buffer.remaining() + " bytes");
             final String message = StandardCharsets.UTF_8.decode(buffer).toString();
             MainActivity.this.onMessage(message);
             return false;
@@ -246,13 +245,13 @@ public class MainActivity extends Activity {
             try {
                 bytes = Objects.requireNonNull(this.dc).crypto.decrypt(new Box(buffer, DataChannelCryptoContext.NONCE_LENGTH));
             } catch (ValidationError | ProtocolException error) {
-                Log.e(TAG, "Invalid packet received", error);
+                log.error("Invalid packet received", error);
                 return;
             } catch (CryptoException error) {
-                Log.e(TAG, "Unable to encrypt", error);
+                log.error("Unable to encrypt", error);
                 return;
             }
-            Log.d(TAG, "Data channel " + dc.label() + " incoming message of length " + bytes.length);
+            log.debug("Data channel " + dc.label() + " incoming message of length " + bytes.length);
 
             // Convert to string
             // TODO: This is ugly... we should use a separate channel instead
@@ -281,7 +280,7 @@ public class MainActivity extends Activity {
 
             @Override
             public void onMessage(DataChannel.Buffer buffer) {
-                Log.d(TAG, "Data channel " + dc.label() + " incoming chunk of length " +
+                log.debug("Data channel " + dc.label() + " incoming chunk of length " +
                     buffer.data.remaining());
                 sdc.unchunk(buffer.data);
             }
@@ -297,7 +296,7 @@ public class MainActivity extends Activity {
 	 */
 	@UiThread
 	public void start(@NonNull final View view) {
-		Log.d(TAG, "Starting SaltyRTC client...");
+		log.debug("Starting SaltyRTC client...");
 		try {
 			this.init();
 			Objects.requireNonNull(this.client).connect();
@@ -316,26 +315,26 @@ public class MainActivity extends Activity {
 	@UiThread
 	public void stop(@Nullable final View view) {
 		if (this.dc != null) {
-			Log.d(TAG, "Closing secure data channel...");
+			log.debug("Closing secure data channel...");
 			this.dc.dc.close();
 			this.dc.dc.dispose();
 			this.dc = null;
 		}
 
 		if (this.task != null) {
-            Log.d(TAG, "Stopping WebRTC task...");
+            log.debug("Stopping WebRTC task...");
             this.task.close(CloseCode.CLOSING_NORMAL);
         }
 
 		if (this.client != null) {
-            Log.d(TAG, "Stopping SaltyRTC client...");
+            log.debug("Stopping SaltyRTC client...");
             this.client.disconnect();
             this.client.events.clearAll();
             this.client = null;
         }
 
 		if (this.pc != null) {
-            Log.d(TAG, "Stopping WebRTC connection...");
+            log.debug("Stopping WebRTC connection...");
             this.pc.close();
             this.pc = null;
         }
@@ -427,7 +426,7 @@ public class MainActivity extends Activity {
 
 	    // Send message
 	    final SecureDataChannelContext dc = Objects.requireNonNull(this.dc);
-	    Log.d(TAG, "Data channel " + dc.dc.label() + " outgoing message of length " +
+	    log.debug("Data channel " + dc.dc.label() + " outgoing message of length " +
             buffer.remaining());
 	    dc.enqueue(() -> {
             // Strip the buffer's array from unnecessary bytes
@@ -439,10 +438,10 @@ public class MainActivity extends Activity {
             try {
                 box = dc.crypto.encrypt(bytes);
             } catch (CryptoException error) {
-                Log.e(TAG, "Unable to encrypt", error);
+                log.error("Unable to encrypt", error);
                 return;
             } catch (OverflowException error) {
-                Log.e(TAG, "CSN overflow", error);
+                log.error("CSN overflow", error);
                 return;
             }
 
@@ -455,17 +454,17 @@ public class MainActivity extends Activity {
                     dc.fcdc.ready().get();
                 } catch (ExecutionException error) {
                     // Should not happen
-                    Log.e(TAG, "Woops!", error);
+                    log.error("Woops!", error);
                     return;
                 } catch (InterruptedException error) {
                     // Can happen when the channel has been closed abruptly
-                    Log.e(TAG, "Unable to send pending chunk! Channel closed abruptly?", error);
+                    log.error("Unable to send pending chunk! Channel closed abruptly?", error);
                     return;
                 }
 
                 // Write chunk
                 final DataChannel.Buffer chunk = new DataChannel.Buffer(chunker.next(), true);
-                Log.d(TAG, "Data channel " + dc.dc.label() + " outgoing chunk of length " +
+                log.debug("Data channel " + dc.dc.label() + " outgoing chunk of length " +
                     chunk.data.remaining());
                 dc.fcdc.write(chunk);
             }
