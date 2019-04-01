@@ -64,6 +64,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import javax.net.ssl.SSLContext;
@@ -91,8 +92,12 @@ public class MainActivity extends Activity {
     private TextView saltyHandoverStateView;
     private LinearLayout messagesLayout;
     private ScrollView messagesScrollView;
+    private LinearLayout textLayout;
     private EditText textInput;
-    private Button sendButton;
+    private Button sendTextButton;
+    private LinearLayout binaryLayout;
+    private EditText binaryInput;
+    private Button sendBinaryButton;
 
     @SuppressLint("SetTextI18n")
     @Override
@@ -114,9 +119,13 @@ public class MainActivity extends Activity {
 
         // Get other views
         this.messagesLayout = findViewById(R.id.messages);
-        this.messagesScrollView = findViewById(R.id.messagesScroll);
-        this.textInput = findViewById(R.id.chat_input);
-        this.sendButton = findViewById(R.id.send_button);
+        this.messagesScrollView = findViewById(R.id.messages_scroll);
+        this.textLayout = findViewById(R.id.text_layout);
+        this.textInput = findViewById(R.id.text_input);
+        this.sendTextButton = findViewById(R.id.send_text_button);
+        this.binaryLayout = findViewById(R.id.binary_layout);
+        this.binaryInput = findViewById(R.id.binary_input);
+        this.sendBinaryButton = findViewById(R.id.send_binary_button);
 
         // Initialize states
         runOnUiThread(this::resetStates);
@@ -171,7 +180,7 @@ public class MainActivity extends Activity {
      * On signaling state change.
      */
     private final EventHandler<SignalingStateChangedEvent> onSignalingStateChanged = event -> {
-        MainActivity.this.setState(StateType.SALTY_SIGNALING, event.getState().name());
+        this.setState(StateType.SALTY_SIGNALING, event.getState().name());
         if (SignalingState.TASK == event.getState()) {
             // Store chosen task
             final Task task = this.client.getTask();
@@ -180,15 +189,15 @@ public class MainActivity extends Activity {
             }
             this.task = (WebRTCTask) this.client.getTask();
 
-            // Show UI elements
+            // Show send elements
             runOnUiThread(() -> {
-                MainActivity.this.textInput.setVisibility(View.VISIBLE);
-                MainActivity.this.sendButton.setVisibility(View.VISIBLE);
+                this.textLayout.setVisibility(View.VISIBLE);
+                this.binaryLayout.setVisibility(View.VISIBLE);
             });
 
             // Initialise WebRTC peer-to-peer connection
             assert this.task != null;
-            MainActivity.this.pc = new PeerConnectionHelper(this.task, this);
+            this.pc = new PeerConnectionHelper(this.task, this);
         }
         return false;
     };
@@ -202,7 +211,7 @@ public class MainActivity extends Activity {
      * On close.
      */
     private final EventHandler<CloseEvent> onClose = event -> {
-        runOnUiThread(() -> MainActivity.this.stop(null));
+        runOnUiThread(() -> this.stop(null));
         return false;
     };
 
@@ -211,7 +220,7 @@ public class MainActivity extends Activity {
      */
     private final EventHandler<HandoverEvent> onHandover = event -> {
         // Enable UI elements
-        runOnUiThread(() -> MainActivity.this.setState(StateType.SALTY_HANDOVER, "YES"));
+        runOnUiThread(() -> this.setState(StateType.SALTY_HANDOVER, "YES"));
         return false;
     };
 
@@ -287,8 +296,13 @@ public class MainActivity extends Activity {
         });
         this.dc = sdc;
 
-        // Enable send button
-        runOnUiThread(() -> MainActivity.this.sendButton.setEnabled(true));
+        // Enable send elements
+        runOnUiThread(() -> {
+            this.textInput.setEnabled(true);
+            this.sendTextButton.setEnabled(true);
+            this.binaryInput.setEnabled(true);
+            this.sendBinaryButton.setEnabled(true);
+        });
     }
 
     /**
@@ -300,8 +314,15 @@ public class MainActivity extends Activity {
         try {
             this.init();
             Objects.requireNonNull(this.client).connect();
+
+            // Swap start/stop button
             this.startButton.setEnabled(false);
             this.stopButton.setEnabled(true);
+
+            // Reset text input
+            this.textInput.setText("");
+
+            // Purge messages logged
             this.messagesLayout.removeAllViewsInLayout();
             this.setState(StateType.SALTY_HANDOVER, "NO");
         } catch (NoSuchAlgorithmException | InvalidKeyException | ConnectionException | CryptoException e) {
@@ -339,11 +360,22 @@ public class MainActivity extends Activity {
             this.pc = null;
         }
 
+        // Reset start/stop button
         this.startButton.setEnabled(true);
         this.stopButton.setEnabled(false);
-        this.textInput.setVisibility(View.INVISIBLE);
-        this.textInput.setEnabled(true);
-        this.sendButton.setVisibility(View.INVISIBLE);
+
+        // Reset text input
+        this.textInput.setText("");
+
+        // Disable send elements
+        this.textInput.setEnabled(false);
+        this.sendTextButton.setEnabled(false);
+        this.binaryInput.setEnabled(false);
+        this.sendBinaryButton.setEnabled(false);
+
+        // Hide send elements
+        this.textLayout.setVisibility(View.INVISIBLE);
+        this.binaryLayout.setVisibility(View.INVISIBLE);
     }
 
     /**
@@ -356,19 +388,19 @@ public class MainActivity extends Activity {
         runOnUiThread(() -> {
             switch (type) {
                 case SALTY_SIGNALING:
-                    MainActivity.this.saltySignalingStateView.setText(state);
+                    this.saltySignalingStateView.setText(state);
                     break;
                 case RTC_SIGNALING:
-                    MainActivity.this.rtcSignalingStateView.setText(state);
+                    this.rtcSignalingStateView.setText(state);
                     break;
                 case RTC_ICE_CONNECTION:
-                    MainActivity.this.rtcIceConnectionStateView.setText(state);
+                    this.rtcIceConnectionStateView.setText(state);
                     break;
                 case RTC_ICE_GATHERING:
-                    MainActivity.this.rtcIceGatheringStateView.setText(state);
+                    this.rtcIceGatheringStateView.setText(state);
                     break;
                 case SALTY_HANDOVER:
-                    MainActivity.this.saltyHandoverStateView.setText(state);
+                    this.saltyHandoverStateView.setText(state);
                     break;
             }
         });
@@ -399,7 +431,7 @@ public class MainActivity extends Activity {
     @AnyThread
     public void onMessage(@NonNull final String message) {
         final View view = this.getMessageTextView(R.color.colorMessageIn, message);
-        runOnUiThread(() -> MainActivity.this.showMessage(view));
+        runOnUiThread(() -> this.showMessage(view));
     }
 
     /**
@@ -407,31 +439,88 @@ public class MainActivity extends Activity {
      */
     @UiThread
     private void showMessage(@NonNull final View view) {
-        MainActivity.this.messagesLayout.addView(view);
-        MainActivity.this.messagesScrollView.post(() -> MainActivity.this.messagesScrollView.fullScroll(ScrollView.FOCUS_DOWN));
+        this.messagesLayout.addView(view);
+        this.messagesScrollView.post(() -> this.messagesScrollView.fullScroll(ScrollView.FOCUS_DOWN));
     }
 
     /**
-     * Send message via the secure data channel.
+     * Send text message via the secure data channel.
      */
     @UiThread
-    public void sendData(@NonNull final View view) {
+    public void sendText(@NonNull final View view) {
         // Fetch from input and encode
         final String text = this.textInput.getText().toString();
         final ByteBuffer buffer = StandardCharsets.UTF_8.encode(text);
 
-        // Disable send-related element until sent
+        // Disable send elements until sent
         this.textInput.setEnabled(false);
-        this.sendButton.setEnabled(false);
+        this.sendTextButton.setEnabled(false);
+        this.binaryInput.setEnabled(false);
+        this.sendBinaryButton.setEnabled(false);
+
+        // Strip the buffer's array from unnecessary bytes
+        // TODO: Fix the crypto API to use ByteBuffer - this is terrible.
+        final byte[] bytes = Arrays.copyOf(buffer.array(), buffer.remaining());
 
         // Send message
+        this.sendMessage(bytes).thenRun(() -> runOnUiThread(() -> {
+            // Reset text
+            this.textInput.setText("");
+
+            // Re-enable send elements
+            this.textInput.setEnabled(true);
+            this.sendTextButton.setEnabled(true);
+            this.binaryInput.setEnabled(true);
+            this.sendBinaryButton.setEnabled(true);
+
+            // Show sent message
+            final View msgView = this.getMessageTextView(R.color.colorMessageOut, text);
+            this.showMessage(msgView);
+        }));
+    }
+
+    /**
+     * Send binary message via the secure data channel.
+     */
+    @UiThread
+    public void sendBinary(@NonNull final View view) {
+        // Fetch length from input
+        final Integer length = Integer.parseInt(this.binaryInput.getText().toString(), 10);
+
+        // Disable send elements until sent
+        this.textInput.setEnabled(false);
+        this.sendTextButton.setEnabled(false);
+        this.binaryInput.setEnabled(false);
+        this.sendBinaryButton.setEnabled(false);
+
+        // Generate binary data
+        final byte[] bytes = new byte[length * 1024];
+
+        // Send message
+        this.sendMessage(bytes).thenRun(() -> runOnUiThread(() -> {
+            // Re-enable send elements
+            this.textInput.setEnabled(true);
+            this.sendTextButton.setEnabled(true);
+            this.binaryInput.setEnabled(true);
+            this.sendBinaryButton.setEnabled(true);
+
+            // Show sent message
+            final String message = "[" + length + " KiB binary data]";
+            final View msgView = this.getMessageTextView(R.color.colorMessageOut, message);
+            this.showMessage(msgView);
+        }));
+    }
+
+    /**
+     * Send a message via the secure data channel.
+     */
+    @AnyThread
+    public @NonNull CompletableFuture<?> sendMessage(@NonNull final byte[] bytes) {
+        // Send message
         final SecureDataChannelContext dc = Objects.requireNonNull(this.dc);
-        log.debug("Data channel " + dc.dc.label() + " outgoing message of length " +
-            buffer.remaining());
-        dc.enqueue(() -> {
-            // Strip the buffer's array from unnecessary bytes
-            // TODO: Fix the crypto API to use ByteBuffer - this is terrible.
-            final byte[] bytes = Arrays.copyOf(buffer.array(), buffer.remaining());
+        return dc.enqueue(() -> {
+            log.debug("Data channel " + dc.dc.label() + " outgoing message of length " +
+                bytes.length);
 
             // Encrypt
             final Box box;
@@ -468,16 +557,7 @@ public class MainActivity extends Activity {
                     chunk.data.remaining());
                 dc.fcdc.write(chunk);
             }
-        }).thenRun(() -> runOnUiThread(() -> {
-            // Re-enable input element
-            this.textInput.setText("");
-            this.textInput.setEnabled(true);
-            this.sendButton.setEnabled(true);
-
-            // Show sent message
-            final View msgView = this.getMessageTextView(R.color.colorMessageOut, text);
-            this.showMessage(msgView);
-        })).exceptionally(error -> {
+        }).exceptionally(error -> {
             this.stop(null);
             return null;
         });
