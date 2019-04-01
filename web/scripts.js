@@ -367,9 +367,17 @@ class TestClient {
             console.debug(`Data channel ${dc.label} incoming message ` +
                 `of length ${message.byteLength}`);
 
-            // Decode as text and show in the textarea
+            // Convert to string
+            // TODO: This is ugly... we should use a separate channel instead
+            let text;
+            if (message.byteLength < 255) {
+                text = new TextDecoder().decode(message);
+            } else {
+                text = `[${Math.trunc(message.byteLength / 1024)} KiB binary data]`;
+            }
+
+            // Display
             const messages = document.querySelector('textarea');
-            const text = new TextDecoder().decode(message);
             messages.value += `< ${text}\n`;
             messages.scrollTop = messages.scrollHeight;
         };
