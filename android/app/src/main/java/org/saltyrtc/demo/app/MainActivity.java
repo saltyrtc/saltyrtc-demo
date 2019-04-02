@@ -274,26 +274,43 @@ public class MainActivity extends Activity {
             // Display
             this.onMessage(message);
         };
-
-        // Create container
         final SecureDataChannelContext sdc = new SecureDataChannelContext(
             dc, Objects.requireNonNull(this.task), messageListener);
 
-        // Handle incoming chunks
+        // Bind state events
         dc.registerObserver(new DataChannel.Observer() {
             @Override
-            public void onBufferedAmountChange(final long bufferedAmount) {}
+            public void onBufferedAmountChange(final long bufferedAmount) {
+                sdc.fcdc.bufferedAmountChange();
+            }
 
             @Override
-            public void onStateChange() {}
+            public void onStateChange() {
+                switch (dc.state()) {
+                    case CONNECTING:
+                        log.debug("Data channel " + dc.label() + " connecting");
+                        break;
+                    case OPEN:
+                        log.info("Data channel " + dc.label() + " open");
+                        break;
+                    case CLOSING:
+                        log.debug("Data channel " + dc.label() + " closing");
+                        break;
+                    case CLOSED:
+                        log.info("Data channel " + dc.label() + " closed");
+                        break;
+                }
+            }
 
             @Override
-            public void onMessage(DataChannel.Buffer buffer) {
+            public void onMessage(@NonNull final DataChannel.Buffer buffer) {
                 log.debug("Data channel " + dc.label() + " incoming chunk of length " +
                     buffer.data.remaining());
                 sdc.unchunk(buffer.data);
             }
         });
+
+        // Create container
         this.dc = sdc;
 
         // Enable send elements

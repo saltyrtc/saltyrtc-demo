@@ -56,33 +56,6 @@ public class SecureDataChannelContext {
         //            in case we're receiving a data channel.
         SecureDataChannelContext.this.chunkLength = 64 * 1024;
 
-        // Bind state events
-        dc.registerObserver(new DataChannel.Observer() {
-            @Override
-            public void onBufferedAmountChange(final long bufferedAmount) {}
-
-            @Override
-            public void onStateChange() {
-                switch (dc.state()) {
-                    case CONNECTING:
-                        log.debug("Data channel " + dc.label() + " connecting");
-                        break;
-                    case OPEN:
-                        log.info("Data channel " + dc.label() + " open");
-                        break;
-                    case CLOSING:
-                        log.debug("Data channel " + dc.label() + " closing");
-                        break;
-                    case CLOSED:
-                        log.info("Data channel " + dc.label() + " closed");
-                        break;
-                }
-            }
-
-            @Override
-            public void onMessage(@NonNull final DataChannel.Buffer buffer) {}
-        });
-
         // Initialise queue
         this.queue = this.fcdc.ready();
     }

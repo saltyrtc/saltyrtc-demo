@@ -312,7 +312,9 @@ public class PeerConnectionHelper {
         // Bind events
         dc.registerObserver(new DataChannel.Observer() {
             @Override
-            public void onBufferedAmountChange(final long bufferedAmount) {}
+            public void onBufferedAmountChange(final long bufferedAmount) {
+                ufcdc.bufferedAmountChange();
+            }
 
             @Override
             public void onStateChange() {

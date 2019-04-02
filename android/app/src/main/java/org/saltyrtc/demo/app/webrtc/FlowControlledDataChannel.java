@@ -16,8 +16,6 @@ import org.slf4j.LoggerFactory;
 import org.webrtc.DataChannel;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * A flow-controlled (sender side) data channel.
@@ -25,8 +23,8 @@ import java.util.concurrent.locks.ReentrantLock;
 @AnyThread
 public class FlowControlledDataChannel {
     @NonNull final Logger log;
-    @NonNull private final Lock lock = new ReentrantLock();
     @NonNull private final DataChannel dc;
+    private final long lowWaterMark;
     private final long highWaterMark;
     @NonNull private CompletableFuture<?> readyFuture = CompletableFuture.completedFuture(null);
 
@@ -52,32 +50,8 @@ public class FlowControlledDataChannel {
         @NonNull final DataChannel dc, final long lowWaterMark, final long highWaterMark) {
         this.log = LoggerFactory.getLogger("SaltyRTC.Demo.FCDC." + dc.id());
         this.dc = dc;
+        this.lowWaterMark = lowWaterMark;
         this.highWaterMark = highWaterMark;
-
-        // Bind buffered amount update event
-        this.dc.registerObserver(new DataChannel.Observer() {
-            @Override
-            public void onBufferedAmountChange(final long bufferedAmount) {
-                lock.lock();
-                try {
-                    // Unpause once low water mark has been reached
-                    if (bufferedAmount <= lowWaterMark &&
-                        !FlowControlledDataChannel.this.readyFuture.isDone()) {
-                        log.debug(FlowControlledDataChannel.this.dc.label() +
-                            " resumed (buffered=" + bufferedAmount + ")");
-                        FlowControlledDataChannel.this.readyFuture.complete(null);
-                    }
-                } finally {
-                    lock.unlock();
-                }
-            }
-
-            @Override
-            public void onStateChange() {}
-
-            @Override
-            public void onMessage(@NonNull final DataChannel.Buffer buffer) {}
-        });
     }
 
     /**
@@ -99,8 +73,7 @@ public class FlowControlledDataChannel {
     public void write(@NonNull final DataChannel.Buffer message) {
         // Note: Locked since the "onBufferedAmountChange" event may run in parallel to the send
         //       calls.
-        lock.lock();
-        try {
+        synchronized (this) {
             // Throw if paused
             if (!this.readyFuture.isDone()) {
                 throw new IllegalStateError("Unable to write, data channel is paused!");
@@ -123,8 +96,24 @@ public class FlowControlledDataChannel {
                 this.readyFuture = new CompletableFuture<>();
                 log.debug(this.dc.label() + " paused (buffered=" + bufferedAmount + ")");
             }
-        } finally {
-            lock.unlock();
         }
+    }
+
+    public void bufferedAmountChange() {
+        // Webrtc.org fires the bufferedAmountChange event from a different
+        // thread (B) while locking the native send call on the current
+        // thread (A). This leads to a deadlock if we try to lock this
+        // instance from (B). So, this... pleasant workaround prevents
+        // deadlocking the send call.
+        CompletableFuture.runAsync(() -> {
+            synchronized (this) {
+                final long bufferedAmount = this.dc.bufferedAmount();
+                // Unpause once low water mark has been reached
+                if (bufferedAmount <= this.lowWaterMark && !this.readyFuture.isDone()) {
+                    log.debug(this.dc.label() + " resumed (buffered=" + bufferedAmount + ")");
+                    this.readyFuture.complete(null);
+                }
+            }
+        });
     }
 }
