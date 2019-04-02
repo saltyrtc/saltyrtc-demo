@@ -306,6 +306,7 @@ public class MainActivity extends Activity {
                         break;
                     case CLOSED:
                         log.info("Data channel " + dc.label() + " closed");
+                        dc.dispose();
                         break;
                 }
             }
@@ -363,7 +364,6 @@ public class MainActivity extends Activity {
         if (this.dc != null) {
             log.debug("Closing secure data channel...");
             this.dc.dc.close();
-            this.dc.dc.dispose();
             this.dc = null;
         }
 

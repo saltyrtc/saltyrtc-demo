@@ -351,9 +351,13 @@ public class PeerConnectionHelper {
                             try {
                                 link.closed();
                             } catch (UntiedException error) {
-                                log.warn("Could not move into closed state", error);
+                                // Note: We can safely ignore this because, in
+                                //       our case, the signalling instance may
+                                //       be closed before the channel has been
+                                //       through the closing sequence.
                             }
                         }
+                        dc.dispose();
                         break;
                 }
             }
