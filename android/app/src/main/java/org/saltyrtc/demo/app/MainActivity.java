@@ -22,6 +22,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
@@ -48,6 +49,7 @@ import org.saltyrtc.client.signaling.CloseCode;
 import org.saltyrtc.client.signaling.state.SignalingState;
 import org.saltyrtc.client.tasks.Task;
 import org.saltyrtc.demo.app.utils.LazysodiumCryptoProvider;
+import org.saltyrtc.demo.app.webrtc.FlowControlledDataChannel;
 import org.saltyrtc.demo.app.webrtc.PeerConnectionHelper;
 import org.saltyrtc.demo.app.webrtc.SecureDataChannelContext;
 import org.saltyrtc.tasks.webrtc.WebRTCTask;
@@ -92,6 +94,8 @@ public class MainActivity extends Activity {
     private TextView saltyHandoverStateView;
     private LinearLayout messagesLayout;
     private ScrollView messagesScrollView;
+    private LinearLayout bufferLayout;
+    private ProgressBar bufferStatus;
     private LinearLayout textLayout;
     private EditText textInput;
     private Button sendTextButton;
@@ -120,6 +124,8 @@ public class MainActivity extends Activity {
         // Get other views
         this.messagesLayout = findViewById(R.id.messages);
         this.messagesScrollView = findViewById(R.id.messages_scroll);
+        this.bufferLayout = findViewById(R.id.buffer_layout);
+        this.bufferStatus = findViewById(R.id.buffer_status);
         this.textLayout = findViewById(R.id.text_layout);
         this.textInput = findViewById(R.id.text_input);
         this.sendTextButton = findViewById(R.id.send_text_button);
@@ -191,6 +197,7 @@ public class MainActivity extends Activity {
 
             // Show send elements
             runOnUiThread(() -> {
+                this.bufferLayout.setVisibility(View.VISIBLE);
                 this.textLayout.setVisibility(View.VISIBLE);
                 this.binaryLayout.setVisibility(View.VISIBLE);
             });
@@ -282,6 +289,7 @@ public class MainActivity extends Activity {
             @Override
             public void onBufferedAmountChange(final long bufferedAmount) {
                 sdc.fcdc.bufferedAmountChange();
+                MainActivity.this.updateBufferStatus(sdc.fcdc, bufferedAmount);
             }
 
             @Override
@@ -381,6 +389,9 @@ public class MainActivity extends Activity {
         this.startButton.setEnabled(true);
         this.stopButton.setEnabled(false);
 
+        // Reset buffer fill status
+        this.bufferStatus.setProgress(0);
+
         // Reset text input
         this.textInput.setText("");
 
@@ -391,6 +402,7 @@ public class MainActivity extends Activity {
         this.sendBinaryButton.setEnabled(false);
 
         // Hide send elements
+        this.bufferLayout.setVisibility(View.INVISIBLE);
         this.textLayout.setVisibility(View.INVISIBLE);
         this.binaryLayout.setVisibility(View.INVISIBLE);
     }
@@ -458,6 +470,15 @@ public class MainActivity extends Activity {
     private void showMessage(@NonNull final View view) {
         this.messagesLayout.addView(view);
         this.messagesScrollView.post(() -> this.messagesScrollView.fullScroll(ScrollView.FOCUS_DOWN));
+    }
+
+    /**
+     * Update buffer fill status.
+     */
+    @UiThread
+    public void updateBufferStatus(@NonNull final FlowControlledDataChannel fcdc, final long bufferedAmount) {
+        final int progress = (int) (((float) bufferedAmount / (float) fcdc.getHighWaterMark()) * 100);
+        this.bufferStatus.setProgress(progress);
     }
 
     /**

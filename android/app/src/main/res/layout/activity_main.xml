@@ -136,7 +136,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_below="@id/status_info"
-        android:layout_above="@id/text_layout"
+        android:layout_above="@id/buffer_layout"
         android:background="#dddddd"
         android:layout_marginTop="8dp">
 
@@ -149,6 +149,31 @@
         </LinearLayout>
 
     </ScrollView>
+
+    <LinearLayout
+        android:id="@+id/buffer_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/text_layout"
+        android:visibility="invisible">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_weight="0"
+            android:layout_height="wrap_content"
+            android:text="Buffer"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            tools:ignore="HardcodedText" />
+
+        <ProgressBar
+            android:id="@+id/buffer_status"
+            android:layout_width="0dp"
+            android:layout_weight="5"
+            android:layout_height="wrap_content"
+            style="@android:style/Widget.DeviceDefault.ProgressBar.Horizontal" />
+
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/text_layout"

@@ -55,6 +55,20 @@ public class FlowControlledDataChannel {
     }
 
     /**
+     * Return the low water mark.
+     */
+    public long getLowWaterMark() {
+        return this.lowWaterMark;
+    }
+
+    /**
+     * Return the high water mark.
+     */
+    public long getHighWaterMark() {
+        return this.highWaterMark;
+    }
+
+    /**
      * A future whether the data channel is ready to be written on.
      */
     public @NonNull CompletableFuture<?> ready() {
