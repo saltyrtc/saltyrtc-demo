@@ -7,6 +7,9 @@
  */
 package org.saltyrtc.demo.app;
 
+/**
+ * Represents the unified state of the transports.
+ */
 public enum StateType {
     SALTY_SIGNALING,
     RTC_SIGNALING,

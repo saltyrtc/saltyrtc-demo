@@ -197,7 +197,7 @@
             android:layout_width="wrap_content"
             android:layout_weight="0"
             android:layout_height="wrap_content"
-            android:onClick="sendText"
+            android:onClick="sendTextMessage"
             android:enabled="false"
             android:text="Send text"
             tools:ignore="HardcodedText" />
@@ -234,7 +234,7 @@
             android:layout_width="wrap_content"
             android:layout_weight="0"
             android:layout_height="wrap_content"
-            android:onClick="sendBinary"
+            android:onClick="sendBinaryMessage"
             android:enabled="false"
             android:text="Send"
             tools:ignore="HardcodedText" />

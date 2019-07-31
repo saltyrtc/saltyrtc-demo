@@ -10,6 +10,9 @@ package org.saltyrtc.demo.app;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+/**
+ * The demo's configuration.
+ */
 public final class Config {
     @NonNull public static String HOST = "server.saltyrtc.org";
     public static int PORT = 443;
@@ -19,7 +22,10 @@ public final class Config {
     @Nullable public static String TURN_USER = null;
     @Nullable public static String TURN_PASS = null;
 
-    @NonNull public static String PRIVATE_KEY = "c41df741435bb144edcd429d1d8e86c5e0e24ccceff87ec5e6647525c2d52077";
-    @NonNull public static String TRUSTED_KEY = "424280166304526b4a2874a2270d091071fcc5c98959f7d4718715626df26204";
-    @NonNull public static String SERVER_KEY = "f77fe623b6977d470ac8c7bf7011c4ad08a1d126896795db9d2b4b7a49ae1045";
+    @NonNull public static String PRIVATE_KEY =
+        "c41df741435bb144edcd429d1d8e86c5e0e24ccceff87ec5e6647525c2d52077";
+    @NonNull public static String TRUSTED_KEY =
+        "424280166304526b4a2874a2270d091071fcc5c98959f7d4718715626df26204";
+    @NonNull public static String SERVER_KEY =
+        "f77fe623b6977d470ac8c7bf7011c4ad08a1d126896795db9d2b4b7a49ae1045";
 }

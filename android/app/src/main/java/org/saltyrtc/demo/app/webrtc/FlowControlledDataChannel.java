@@ -113,6 +113,9 @@ public class FlowControlledDataChannel {
         }
     }
 
+    /**
+     * Must be called when the data channel's buffered amount changed.
+     */
     public void bufferedAmountChange() {
         // Webrtc.org fires the bufferedAmountChange event from a different
         // thread (B) while locking the native send call on the current

@@ -28,7 +28,10 @@ public class LazysodiumCryptoProvider implements CryptoProvider {
     final private static SodiumAndroid sodium = new SodiumAndroid();
 
     @Override
-    public void generateKeypair(@NonNull byte[] publickey, @NonNull byte[] privatekey) throws CryptoException {
+    public void generateKeypair(
+        @NonNull byte[] publickey,
+        @NonNull byte[] privatekey
+    ) throws CryptoException {
         // Verify key lengths
         if (publickey.length != CryptoProvider.PUBLICKEYBYTES) {
             throw new CryptoException("Invalid public key buffer length");
@@ -66,7 +69,11 @@ public class LazysodiumCryptoProvider implements CryptoProvider {
 
     @NonNull
     @Override
-    public byte[] symmetricEncrypt(@NonNull byte[] input, @NonNull byte[] key, @NonNull byte[] nonce) throws CryptoException {
+    public byte[] symmetricEncrypt(
+        @NonNull byte[] input,
+        @NonNull byte[] key,
+        @NonNull byte[] nonce
+    ) throws CryptoException {
         // Verify key lengths
         if (key.length != CryptoProvider.SYMMKEYBYTES) {
             throw new CryptoException("Invalid key length");
@@ -78,7 +85,8 @@ public class LazysodiumCryptoProvider implements CryptoProvider {
         // Encrypt
         final SecretBox.Native lazySodium = new LazySodiumAndroid(sodium);
         final byte[] output = new byte[input.length + CryptoProvider.BOXOVERHEAD];
-        final boolean success = lazySodium.cryptoSecretBoxEasy(output, input, input.length, nonce, key);
+        final boolean success = lazySodium.cryptoSecretBoxEasy(
+            output, input, input.length, nonce, key);
         if (!success) {
             throw new CryptoException("Could not encrypt data");
         }
@@ -88,7 +96,11 @@ public class LazysodiumCryptoProvider implements CryptoProvider {
 
     @NonNull
     @Override
-    public byte[] symmetricDecrypt(@NonNull byte[] input, @NonNull byte[] key, @NonNull byte[] nonce) throws CryptoException {
+    public byte[] symmetricDecrypt(
+        @NonNull byte[] input,
+        @NonNull byte[] key,
+        @NonNull byte[] nonce
+    ) throws CryptoException {
         // Verify key lengths
         if (key.length != CryptoProvider.SYMMKEYBYTES) {
             throw new CryptoException("Invalid key length");
@@ -100,7 +112,8 @@ public class LazysodiumCryptoProvider implements CryptoProvider {
         // Decrypt
         final SecretBox.Native lazySodium = new LazySodiumAndroid(sodium);
         final byte[] decrypted = new byte[input.length - CryptoProvider.BOXOVERHEAD];
-        final boolean success = lazySodium.cryptoSecretBoxOpenEasy(decrypted, input, input.length, nonce, key);
+        final boolean success = lazySodium.cryptoSecretBoxOpenEasy(
+            decrypted, input, input.length, nonce, key);
         if (!success) {
             throw new CryptoException("Could not decrypt data");
         }
@@ -110,7 +123,10 @@ public class LazysodiumCryptoProvider implements CryptoProvider {
 
     @NonNull
     @Override
-    public CryptoInstance getInstance(@NonNull byte[] ownPrivateKey, @NonNull byte[] otherPublicKey) throws CryptoException {
+    public CryptoInstance getInstance(
+        @NonNull byte[] ownPrivateKey,
+        @NonNull byte[] otherPublicKey
+    ) throws CryptoException {
         return new LazysodiumCryptoInstance(sodium, ownPrivateKey, otherPublicKey);
     }
 }
