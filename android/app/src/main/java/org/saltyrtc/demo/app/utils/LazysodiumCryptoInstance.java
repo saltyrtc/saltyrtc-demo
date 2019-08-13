@@ -53,7 +53,8 @@ public class LazysodiumCryptoInstance implements CryptoInstance {
     @Override
     public byte[] encrypt(@NonNull byte[] data, @NonNull byte[] nonce) throws CryptoException {
         final byte[] ciphertext = new byte[data.length + MACBYTES];
-        final boolean success = this.sodium.cryptoBoxEasyAfterNm(ciphertext, data, data.length, nonce, this.sharedKey);
+        final boolean success = this.sodium.cryptoBoxEasyAfterNm(
+            ciphertext, data, data.length, nonce, this.sharedKey);
         if (!success) {
             throw new CryptoException("Could not encrypt data");
         }
@@ -64,7 +65,8 @@ public class LazysodiumCryptoInstance implements CryptoInstance {
     @Override
     public byte[] decrypt(@NonNull byte[] data, @NonNull byte[] nonce) throws CryptoException {
         final byte[] plaintext = new byte[data.length - MACBYTES];
-        final boolean success = this.sodium.cryptoBoxOpenEasyAfterNm(plaintext, data, data.length, nonce, this.sharedKey);
+        final boolean success = this.sodium.cryptoBoxOpenEasyAfterNm(
+            plaintext, data, data.length, nonce, this.sharedKey);
         if (!success) {
             throw new CryptoException("Could not decrypt data");
         }
