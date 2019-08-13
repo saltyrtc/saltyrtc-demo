@@ -1,18 +1,29 @@
-apply plugin: 'com.android.application'
-
-android {
-    compileSdkVersion 27
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+buildscript {
+    repositories {
+        jcenter()
+        maven {
+            url 'https://maven.google.com/'
+            name 'Google'
+        }
     }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.3.2'
+    }
+}
+
+apply plugin: 'com.android.application'
+apply plugin: 'maven'
+
+// Android configuration
+android {
+    compileSdkVersion 28
+
     defaultConfig {
         applicationId "org.saltyrtc.demo.app"
-        minSdkVersion 21
-        targetSdkVersion 27
+        minSdkVersion 24
+        targetSdkVersion 28
         versionCode 2
         versionName "1.1"
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
         release {
@@ -21,21 +32,46 @@ android {
         }
     }
     packagingOptions {
+        exclude 'META-INF/NOTICE'
         exclude 'META-INF/LICENSE'
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+// In this section you declare where to find the dependencies of your project
+repositories {
+    jcenter()
+    maven { url "https://dl.bintray.com/terl/lazysodium-maven" }
+    maven { url "https://dl.bintray.com/threema/maven" }
+    maven {
+        url 'https://maven.google.com/'
+        name 'Google'
     }
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
-    androidTestImplementation('com.android.support.test.espresso:espresso-core:2.2.2', {
-        exclude group: 'com.android.support', module: 'support-annotations'
-    })
-    testImplementation 'junit:junit:4.12'
+    // Android annotations
+    implementation 'com.android.support:support-annotations:28.0.0'
 
-    implementation 'com.android.support:support-annotations:27.+'
-    implementation('org.saltyrtc.client:saltyrtc-client:0.11.+', {
+    // Android logging
+    implementation 'sk.baka.slf4j:slf4j-handroid:1.7.27'
+
+    // WebRTC
+    implementation 'ch.threema.webrtc:webrtc-android:74.0.0'
+
+    // NaCl library
+    implementation 'net.java.dev.jna:jna:5.2.0@aar'
+    implementation 'com.goterl.lazycode:lazysodium-android:3.6.0@aar'
+
+    // SaltyRTC
+    implementation('org.saltyrtc.client:saltyrtc-client:0.13.0', {
         exclude group: 'org.json', module: 'json'
     })
-    implementation 'org.saltyrtc.tasks.webrtc:saltyrtc-task-webrtc:0.13.+'
-    implementation 'com.noveogroup.android:android-logger:1.3.1'
+    implementation 'org.saltyrtc.tasks.webrtc:saltyrtc-task-webrtc:0.17.0'
+
+    // Chunking
+    implementation 'org.saltyrtc.chunked-dc:chunked-dc:1.0.0'
 }

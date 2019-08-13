@@ -33,12 +33,13 @@
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
         android:onClick="showKeyInfo"
-        android:text="Key Info"/>
+        android:text="Key Info"
+        tools:ignore="HardcodedText" />
 
 
     <LinearLayout
         android:id="@+id/status_info"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/button_start"
         android:orientation="vertical">
@@ -130,36 +131,15 @@
 
     </LinearLayout>
 
-    <Button
-        android:id="@+id/send_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentEnd="true"
-        android:visibility="invisible"
-        android:onClick="sendDc"
-        android:enabled="false"
-        android:text="Send via DC"/>
-
-    <EditText
-        android:id="@+id/chat_input"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentBottom="true"
-        android:layout_toStartOf="@id/send_button"
-        android:visibility="invisible"
-        android:hint="Enter text"/>
-
     <ScrollView
-        android:id="@+id/messagesScroll"
+        android:id="@+id/messages_scroll"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_below="@id/status_info"
-        android:layout_above="@id/send_button"
+        android:layout_above="@id/buffer_layout"
         android:background="#dddddd"
         android:layout_marginTop="8dp">
+
         <LinearLayout
             android:id="@+id/messages"
             android:layout_width="match_parent"
@@ -167,6 +147,98 @@
             android:paddingBottom="8dp"
             android:orientation="vertical">
         </LinearLayout>
+
     </ScrollView>
+
+    <LinearLayout
+        android:id="@+id/buffer_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/text_layout"
+        android:visibility="invisible">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_weight="0"
+            android:layout_height="wrap_content"
+            android:text="Buffer"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            tools:ignore="HardcodedText" />
+
+        <ProgressBar
+            android:id="@+id/buffer_status"
+            android:layout_width="0dp"
+            android:layout_weight="5"
+            android:layout_height="wrap_content"
+            style="@android:style/Widget.DeviceDefault.ProgressBar.Horizontal" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/text_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/binary_layout"
+        android:visibility="invisible">
+
+        <EditText
+            android:id="@+id/text_input"
+            android:layout_width="0dp"
+            android:layout_weight="5"
+            android:layout_height="fill_parent"
+            android:layout_marginTop="8dp"
+            android:hint="Enter text"
+            android:enabled="false"
+            tools:ignore="HardcodedText" />
+
+        <Button
+            android:id="@+id/send_text_button"
+            android:layout_width="wrap_content"
+            android:layout_weight="0"
+            android:layout_height="wrap_content"
+            android:onClick="sendText"
+            android:enabled="false"
+            android:text="Send text"
+            tools:ignore="HardcodedText" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/binary_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:visibility="invisible">
+
+        <EditText
+            android:id="@+id/binary_input"
+            android:layout_width="0dp"
+            android:layout_weight="5"
+            android:layout_height="fill_parent"
+            android:layout_marginTop="8dp"
+            android:inputType="number"
+            android:text="64"
+            android:hint="Enter binary size"
+            android:enabled="false"
+            tools:ignore="HardcodedText" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="KiB binary data"
+            tools:ignore="HardcodedText" />
+
+        <Button
+            android:id="@+id/send_binary_button"
+            android:layout_width="wrap_content"
+            android:layout_weight="0"
+            android:layout_height="wrap_content"
+            android:onClick="sendBinary"
+            android:enabled="false"
+            android:text="Send"
+            tools:ignore="HardcodedText" />
+
+    </LinearLayout>
 
 </RelativeLayout>
