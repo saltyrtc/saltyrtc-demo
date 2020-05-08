@@ -294,7 +294,7 @@ class TestClient {
                 `length ${event.data.byteLength}`);
             link.receive(new Uint8Array(event.data));
         };
-        
+
         // Attach to this for debug purposes
         // noinspection JSUnusedGlobalSymbols
         this.sdc = dc;
@@ -331,7 +331,7 @@ class TestClient {
         // Create crypto context
         // Note: We need to apply encrypt-then-chunk for backwards
         //       compatibility reasons.
-        const crypto = this.task.getCryptoContext(dc.id);
+        const crypto = this.task.createCryptoContext(dc.id);
 
         // Create unchunker
         // Note: We need to use an unreliable unordered unchunker for backwards
