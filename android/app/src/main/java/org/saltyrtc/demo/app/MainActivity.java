@@ -23,9 +23,13 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.ScrollView;
+import android.widget.Switch;
 import android.widget.TextView;
 
+import org.json.JSONException;
 import org.saltyrtc.client.SaltyRTC;
 import org.saltyrtc.client.crypto.CryptoException;
 import org.saltyrtc.client.events.ApplicationDataEvent;
@@ -36,7 +40,11 @@ import org.saltyrtc.client.exceptions.ConnectionException;
 import org.saltyrtc.client.exceptions.InvalidKeyException;
 import org.saltyrtc.client.keystore.KeyStore;
 import org.saltyrtc.client.signaling.state.SignalingState;
+import org.saltyrtc.demo.app.benchmark.Benchmark;
+import org.saltyrtc.demo.app.transport.ChunkMode;
+import org.saltyrtc.demo.app.transport.CryptoMode;
 import org.saltyrtc.demo.app.chat.Chat;
+import org.saltyrtc.demo.app.exceptions.InvalidParameterException;
 import org.saltyrtc.demo.app.signaling.SignalingConnection;
 import org.saltyrtc.tasks.webrtc.WebRTCTask;
 import org.slf4j.Logger;
@@ -82,6 +90,8 @@ public class MainActivity extends Activity {
     private LinearLayout binaryLayout;
     private EditText binaryInput;
     private Button sendBinaryButton;
+    private Button benchmarkButton;
+    private AlertDialog benchmarkDialog;
 
     @SuppressLint("SetTextI18n")
     @Override
@@ -112,6 +122,16 @@ public class MainActivity extends Activity {
         this.binaryLayout = findViewById(R.id.binary_layout);
         this.binaryInput = findViewById(R.id.binary_input);
         this.sendBinaryButton = findViewById(R.id.send_binary_button);
+        this.benchmarkButton = findViewById(R.id.benchmark_button);
+
+        // Benchmark dialog
+        this.benchmarkDialog = new AlertDialog.Builder(this)
+            .setView(this.getLayoutInflater()
+                .inflate(R.layout.dialog_benchmark, findViewById(R.id.activity_main), false))
+            .setTitle("Benchmark")
+            .setPositiveButton("Run", (self, which) -> this.startBenchmark())
+            .setNegativeButton("Cancel", (self, which) -> {})
+            .create();
 
         // Initialize states
         this.runOnUiThread(this::resetStates);
@@ -137,6 +157,7 @@ public class MainActivity extends Activity {
         this.sendTextButton.setEnabled(on);
         this.binaryInput.setEnabled(on);
         this.sendBinaryButton.setEnabled(on);
+        this.benchmarkButton.setEnabled(on);
     }
 
     /**
@@ -272,7 +293,16 @@ public class MainActivity extends Activity {
             final SignalingConnection sc = Objects.requireNonNull(MainActivity.this.sc);
             final WebRTCTask task = Objects.requireNonNull(sc.getTask());
 
-            // Create a chat instance (if not already created)
+            // Try to create benchmark instance
+            try {
+                final Benchmark benchmark = Benchmark.fromChannel(dc);
+
+                // TODO: Run benchmark
+                //benchmark.run();
+                return;
+            } catch (InvalidParameterException ignored) {}
+
+            // Fall back to creating a chat instance (if not already created)
             if (MainActivity.this.chat == null) {
                 MainActivity.this.chat = new Chat(dc, task, new ChatEvents());
 
@@ -352,6 +382,8 @@ public class MainActivity extends Activity {
      */
     @UiThread
     public void stop(@Nullable final View view) {
+        // TODO: Close any running benchmarks
+
         // Close chat
         if (this.chat != null) {
             this.chat.close();
@@ -524,5 +556,75 @@ public class MainActivity extends Activity {
         builder.setMessage(msg);
         builder.setPositiveButton("OK", (dialogInterface, i) -> dialogInterface.dismiss());
         builder.create().show();
+    }
+
+    /**
+     * Show the benchmark dialog.
+     */
+    @UiThread
+    public void showBenchmarkDialog(@NonNull final View view) {
+        this.benchmarkDialog.show();
+    }
+
+    /**
+     * Enable/disable crypto radio buttons.
+     */
+    @UiThread
+    public void benchmarkToggleCrypto(@NonNull final View view) {
+        final Switch cryptoSwitch = this.benchmarkDialog.findViewById(R.id.crypto_switch);
+        final RadioGroup cryptoGroup = this.benchmarkDialog.findViewById(R.id.crypto_mode_group);
+        for (int i = 0; i < cryptoGroup.getChildCount(); ++i) {
+            final RadioButton cryptoButton = (RadioButton) cryptoGroup.getChildAt(i);
+            cryptoButton.setEnabled(cryptoSwitch.isChecked());
+        }
+    }
+
+    /**
+     * Run a benchmark.
+     */
+    @UiThread
+    public void startBenchmark() {
+        final Switch cryptoSwitch = this.benchmarkDialog.findViewById(R.id.crypto_switch);
+
+        // Fetch length from input
+        final int length = Integer.parseInt(this.binaryInput.getText().toString(), 10);
+
+        // Determine crypto mode
+        final CryptoMode cryptoMode;
+        if (cryptoSwitch.isChecked()) {
+            final RadioButton chunkThenEncryptButton =
+                this.benchmarkDialog.findViewById(R.id.crypto_mode_chunk_then_encrypt);
+            if (chunkThenEncryptButton.isChecked()) {
+                cryptoMode = CryptoMode.CHUNK_THEN_ENCRYPT;
+            } else {
+                cryptoMode = CryptoMode.ENCRYPT_THEN_CHUNK;
+            }
+        } else {
+            cryptoMode = CryptoMode.NONE;
+        }
+
+        // Determine chunk mode
+        final RadioButton reliableOrderedButton =
+            this.benchmarkDialog.findViewById(R.id.chunk_mode_reliable_ordered);
+        final ChunkMode chunkMode = ChunkMode.UNRELIABLE_UNORDERED;
+        if (reliableOrderedButton.isChecked()) {
+            log.error("Reliable/Ordered mode not yet available in SaltyRTC Java version");
+            this.stop(null);
+            return;
+        }
+
+        // Create benchmark
+        final PeerConnection pc = Objects.requireNonNull(this.sc).getPeerConnection();
+        final Benchmark benchmark;
+        try {
+            benchmark = Benchmark.create(Objects.requireNonNull(pc), cryptoMode, chunkMode, length);
+        } catch (JSONException error) {
+            log.error("Unable to encode JSON", error);
+            this.stop(null);
+            return;
+        }
+
+        // TODO: Run benchmark
+        //benchmark.run();
     }
 }
